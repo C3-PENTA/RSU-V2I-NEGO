@@ -6,6 +6,9 @@ def nego_lane_change():
 def nego_lane_merge():
     pass
 
+def nego_emergency_vehicle():
+    pass
+
 def loop_planning_main():
     egoShouldStop: bool = True
     

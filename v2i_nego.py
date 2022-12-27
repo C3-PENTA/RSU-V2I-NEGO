@@ -1,5 +1,8 @@
 
 
+def plan_unprotected_left_turn():
+    pass
+
 def nego_lane_change():
     pass
 
@@ -15,3 +18,7 @@ def loop_planning_main():
     while True:
         if obu.emergencyMsg:
             nego_emergency()
+            
+        if ego.turnType is TURNTYPE.UNPROTECTED_LEFT_TURN:
+            if obu.turnMsg is True:
+                

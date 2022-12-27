@@ -1,0 +1,18 @@
+# pycache folder and file
+/__pycache__/
+__pycache__/
+/__pycache__
+__pycache__
+
+/*.pyc
+
+# log
+logs/
+/logs
+
+# env and config
+tempCodeRunnerFile.py
+.vscode/
+
+# test
+test.py

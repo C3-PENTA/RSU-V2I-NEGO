@@ -21,4 +21,8 @@ def loop_planning_main():
             
         if ego.turnType is TURNTYPE.UNPROTECTED_LEFT_TURN:
             if obu.turnMsg is True:
-                
+                egoShouldStop = False
+            elif obu.turnMsg is False:
+                egoShouldStop = True
+            else:
+                egoShouldStop = plan_unprotected_left_turn()

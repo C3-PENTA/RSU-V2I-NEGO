@@ -42,3 +42,61 @@ class ManeuverType:
     OVERTAKE = 8
 
 
+@dataclass
+class MessageHeader:
+    magic: int = 0xf1f1
+    msg_type: int = 0
+    crc16: int = 0
+    len:int = 0
+    _fmt: str = '>HBHH'
+
+
+@dataclass
+class BsmData:
+    msg_count: int = 0  # 4bytes uint / 0...127
+    tmp_id: int = 0  # 4bytes uint 
+    dsecond: int = 0  # 2bytes uint / unit: miliseconds
+    lat: int = 0  # 4bytes int / unit: microdegrees/10
+    lon: int = 0  # 4bytes int / unit: microdegrees/10
+    elevation: int = 0  # 2bytes int / WGS84 / -4096 ~ 61439 / unit: 10cm
+    semi_major: int = 0  # 1byte uint
+    semi_minor: int = 0  # 1byte uint
+    orientation: int = 0  # 2bytes uint
+    transmission_and_speed: int = 0  # 2bytes uint / 0...11 bit * 0.02
+    heading: int = 0  # 2bytes uint / unit of 0.0125 degrees / 0 ~ 359.9875
+    steering_wheel_angle: int = 0  # 1byte uint
+    accel_long: int = 0  # 2bytes int
+    accel_lat: int = 0  # 2bytes int
+    accel_vert: int = 0  # 1byte uint
+    yaw_rate: int = 0  # 2bytes int
+    brake_system_status: int = 0  # 2bytes uint
+    width: int = 0  # 2bytes uint / unit: cm
+    length: int = 0  # 2bytes uint / unit: cm
+    l2id: int = 0  # 4bytes uint
+
+
+@dataclass
+class BsmLightData:
+    msg_count: int = 0  # 4bytes uint / 0...127
+    tmp_id: int = 0  # 4bytes uint 
+    dsecond: int = 0  # 2bytes uint / unit: miliseconds
+    lat: int = 0  # 4bytes int / unit: microdegrees/10
+    lon: int = 0  # 4bytes int / unit: microdegrees/10
+    elevation: int = 0  # 2bytes int / WGS84 / -4096 ~ 61439 / unit: 10cm
+    semi_major: int = 0  # 1byte uint
+    semi_minor: int = 0  # 1byte uint
+    orientation: int = 0  # 2bytes uint
+    transmission_and_speed: int = 0  # 2bytes uint / 0...11 bit * 0.02
+    heading: int = 0  # 2bytes uint / unit of 0.0125 degrees / 0 ~ 359.9875
+    steering_wheel_angle: int = 0  # 1byte uint
+    accel_long: int = 0  # 2bytes int
+    accel_lat: int = 0  # 2bytes int
+    accel_vert: int = 0  # 1byte uint
+    yaw_rate: int = 0  # 2bytes int
+    brake_system_status: int = 0  # 2bytes uint
+    width: int = 0  # 2bytes uint / unit: cm
+    length: int = 0  # 2bytes uint / unit: cm
+    l2id: int = 0  # 4bytes uint
+    light: int = 0  # 2bytes uint
+
+

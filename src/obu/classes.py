@@ -100,3 +100,11 @@ class BsmLightData:
     light: int = 0  # 2bytes uint
 
 
+@dataclass
+class DmmData:
+    sender: int = 0  # 4bytes uint
+    receiver: int = 0  # 4bytes uint
+    maneuver_type: int = 0  # 2bytes uint
+    remain_distance: int = 0  # 1byte uint
+
+

@@ -128,3 +128,10 @@ class DnmDoneData:
     nego_driving_done: int = 0  # 1byte uint
 
 
+@dataclass
+class EdmData:
+    sender: int = 0  # 4bytes uint
+    maneuver_type: int = 0  # 2bytes uint
+    remain_distance: int = 0  # 1byte uint
+
+

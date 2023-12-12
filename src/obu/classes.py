@@ -108,3 +108,23 @@ class DmmData:
     remain_distance: int = 0  # 1byte uint
 
 
+@dataclass
+class DnmRequestData:
+    sender: int = 0  # 4bytes uint
+    receiver: int = 0  # 4bytes uint
+    remain_distance: int = 0  # 1byte uint
+
+
+class DnmResponseData:
+    sender: int = 0  # 4bytes uint
+    receiver: int = 0  # 4bytes uint
+    agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
+
+
+@dataclass
+class DnmDoneData:
+    sender: int = 0  # 4bytes uint
+    receiver: int = 0  # 4bytes uint
+    nego_driving_done: int = 0  # 1byte uint
+
+

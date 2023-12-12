@@ -6,6 +6,8 @@ __pycache__
 
 /*.pyc
 
+docs/
+
 # log
 logs/
 /logs

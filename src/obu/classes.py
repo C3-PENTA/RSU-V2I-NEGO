@@ -135,3 +135,13 @@ class EdmData:
     remain_distance: int = 0  # 1byte uint
 
 
+@dataclass
+class L2idRequestData(MessageHeader):
+    msg_type = MessageType.L2ID_REQUEST
+
+
+@dataclass
+class L2idResponseData:
+    l2id: int = 0  # 4bytes uint
+
+

@@ -1,14 +1,16 @@
 from time import time, sleep, strftime, localtime
 from struct import pack, unpack
 
+MSG_COMMON_KEYS = ['name', 'status', 'lastUpdate', 'updateCount', 'updateRate']
 
+        
 class Message():
     
     KEYS = ['name', 'status', 'lastUpdate', 'updateCount', 'updateRate']
     
     def __init__(self) -> None:
         self.name = ''
-        self.status = STATE.DISCONNECTED
+        self.status = 0
         self.lastUpdate = time()
         self.updateCount = 0
         self.updateRate = 0
@@ -23,6 +25,80 @@ class Message():
     def get_stat_string(self):
         return f'{self.name},{self.status},{self.lastUpdate},{self.updateCount},{self.updateRate}'
 
+
+
+class VCANData(Message):
+    NAME = 'VCANDATA'
+    KEYS = MSG_COMMON_KEYS + [
+        'Mode', 'SteerTO', 'AccelTO', 'BrakeTO', 'ESTOPTO',
+        'APMStatus', 'ASMStatus', 'AGMStatus', 'BCMStatus',
+        'SteerAngle', 'AccelPos', 'BrakePos',
+        'Gear', 'Speed', 'Door', 'TurnSignal']
+    
+    def __init__(self):
+        super().__init__()
+        self.name = VCANData.NAME
+        self.isAlive = False
+        
+        self.mode = 0
+        
+        self.apmMode = 0
+        self.asmMode = 0
+        self.agmMode = 0
+        self.bcmMode = 0
+        
+        self.steerTakeOver = 0
+        self.accelTakeOver = 0
+        self.brakeTakeOver = 0
+        self.estopTakeOver = 0
+        
+        self.upperError = 0
+        self.brakeError = 0
+        self.accelError = 0
+        
+        self.accelPositionFdk = 0
+        self.brakePositionFdk = 0
+        self.accelErrorStatus = 0
+        self.brakeErrorStatus = 0
+        self.pedalPush = 0
+        
+        self.apmAlive, self.apmStatus = False, 0
+        self.steerAngle = 0
+        
+        self.asmAlive, self.asmStatus = False, 0
+        self.accelPosition = 0
+        self.brakePosition = 0
+        
+        self.agmAlive, self.agmStatus = False, 0
+        self.gear = 0
+        self.speed = 0
+        self.clusterSpeed = 0
+        
+        self.bcmAlive, self.bcmStatus = False, 0
+        self.door = 0
+        self.leftTurnLight = 0
+        self.rightTurnLight = 0
+        self.turn_signal = 0
+        
+        # VCU STATUS
+        self.vcuStatusNormal = False
+        self.estopButtonPressed = False
+        self.agmSwitchOn = False
+        self.asmSwitchOn = False
+        self.apmSwitchOn = False
+        self.autoSwitchOn = False
+        
+        self.apmAliveError = 0
+        self.asmAliveError = 0
+        self.bcmAliveError = 0
+        self.agmAliveError = 0
+        
+        self.count = 0
+        self.preCount = 0
+        
+        
+        
+        
 
 class GPSData(Message):
     NAME = 'GPSDATA'
@@ -83,39 +159,6 @@ class GPSData(Message):
         self.azimuth_rad = 0.0
         self.front_easting = 0.0
         self.front_northing = 0.0
-
-    def set_values_from_string(self, data: str):
-        funcName = f'set_values_from_string'
-        
-        data = data.split(',')
-        if data[0] != self.name:
-            return False
-        
-        self.status, self.lastUpdate, self.updateCount, self.updateRate = int(data[1]), float(data[2]), int(data[3]), float(data[4])
-        self.utc = float(data[5])
-        
-        self.insStat = int(data[6])
-        self.lat, self.lon, self.hgt, self.northVel, self.eastVel, self.upVel, self.roll, self.pitch, self.azimuth = [float(i) for i in data[7:16]]
-        
-        self.solStat, self.rtkStat = [int(i) for i in data[16:18]]
-        self.bestLat, self.bestLon, self.bestHgt, self.bestLatSig, self.bestLonSig, self.bestHgtSig = [float(i) for i in data[18:24]]
-        
-        self.latency, self.age, self.horSpd, self.heading, self.verSpd = [float(i) for i in data[24:29]]
-
-        self.northing, self.easting, self.utmHgt, self.northSig, self.eastSig, self.hgtSig = [float(i) for i in data[29:35]]
-        
-        self.gpsVel, self.accuracy = [float(i) for i in data[35:37]]
-        
-        return True
-        
-    def get_string(self):
-        inspvasString = f'{self.insStat},{self.lat},{self.lon},{self.hgt},{self.northVel},{self.eastVel},{self.upVel},{self.roll},{self.pitch},{self.azimuth}'
-        bestposString = f'{self.solStat},{self.rtkStat},{self.bestLat},{self.bestLon},{self.bestHgt},{self.bestLatSig},{self.bestLonSig},{self.bestHgtSig}'
-        bestvelString = f'{self.latency},{self.age},{self.horSpd},{self.heading},{self.verSpd}'
-        bestutmString = f'{self.northing},{self.easting},{self.utmHgt},{self.northSig},{self.eastSig},{self.hgtSig}'
-        
-        return f'{self.get_stat_string()},{self.utc},{inspvasString},{bestposString},{bestvelString},{bestutmString},{self.gpsVel},{self.accuracy}'
-
 
 
 class ObuMessage():

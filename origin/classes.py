@@ -1,6 +1,7 @@
 from time import time, sleep, strftime, localtime
 from struct import pack, unpack
 
+MSG_COMMON_KEYS = ['name', 'status', 'lastUpdate', 'updateCount', 'updateRate']
 
 class Message():
     
@@ -8,7 +9,7 @@ class Message():
     
     def __init__(self) -> None:
         self.name = ''
-        self.status = STATE.DISCONNECTED
+        self.status = 0
         self.lastUpdate = time()
         self.updateCount = 0
         self.updateRate = 0

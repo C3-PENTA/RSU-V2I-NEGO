@@ -2,6 +2,100 @@ from time import time, sleep, strftime, localtime
 from struct import pack, unpack
 
 
+class GPSData(Message):
+    NAME = 'GPSDATA'
+    KEYS = MSG_COMMON_KEYS + [
+        'utc', 'insStat', 'lat', 'lon', 'hgt', 'northVel', 'eastVel', 'upVel', 'roll', 'pitch', 'azimuth',
+        'solStat', 'rtkStat', 'bestLat', 'bestLon', 'bestHgt', 'bestLatSig', 'bestLonSig', 'bestHgtSig',
+        'latency', 'age', 'horSpd', 'heading', 'verSpd',
+        'northing', 'easting', 'utmHgt', 'northSig', 'eastSig', 'hgtSig',
+        'gpsVel', 'accuracy']
+    
+    def __init__(self):
+        super().__init__()
+        self.name = GPSData.NAME
+        self.isAlive = False
+        
+        self.utc = 0
+        self.week = 0
+        self.seconds = 0
+        
+        self.insStat = 0
+        self.lat = 0
+        self.lon = 0
+        self.hgt = 0
+        self.northVel = 0
+        self.eastVel = 0
+        self.upVel = 0
+        self.roll = 0
+        self.pitch = 0
+        self.azimuth = 0
+        
+        self.solStat = 2
+        self.rtkStat = 0
+        self.bestLat = 0
+        self.bestLon = 0
+        self.bestHgt = 0
+        self.bestLatSig = 0
+        self.bestLonSig = 0
+        self.bestHgtSig = 0
+        
+        self.latency = 0
+        self.age = 0
+        self.horSpd = 0
+        self.heading = 0
+        self.verSpd = 0
+        
+        self.northing = 0
+        self.easting = 0
+        self.utmHgt = 0
+        self.northSig = 0
+        self.eastSig = 0
+        self.hgtSig = 0
+        self.zoneNumber = 0
+        self.zoneLetter = ''
+        
+        self.gpsVel = 0
+        self.accuracy = 0
+        self.avgError = 0
+        self.azimuth_rad = 0.0
+        self.front_easting = 0.0
+        self.front_northing = 0.0
+
+    def set_values_from_string(self, data: str):
+        funcName = f'set_values_from_string'
+        
+        data = data.split(',')
+        if data[0] != self.name:
+            return False
+        
+        self.status, self.lastUpdate, self.updateCount, self.updateRate = int(data[1]), float(data[2]), int(data[3]), float(data[4])
+        self.utc = float(data[5])
+        
+        self.insStat = int(data[6])
+        self.lat, self.lon, self.hgt, self.northVel, self.eastVel, self.upVel, self.roll, self.pitch, self.azimuth = [float(i) for i in data[7:16]]
+        
+        self.solStat, self.rtkStat = [int(i) for i in data[16:18]]
+        self.bestLat, self.bestLon, self.bestHgt, self.bestLatSig, self.bestLonSig, self.bestHgtSig = [float(i) for i in data[18:24]]
+        
+        self.latency, self.age, self.horSpd, self.heading, self.verSpd = [float(i) for i in data[24:29]]
+
+        self.northing, self.easting, self.utmHgt, self.northSig, self.eastSig, self.hgtSig = [float(i) for i in data[29:35]]
+        
+        self.gpsVel, self.accuracy = [float(i) for i in data[35:37]]
+        
+        return True
+        
+    def get_string(self):
+        inspvasString = f'{self.insStat},{self.lat},{self.lon},{self.hgt},{self.northVel},{self.eastVel},{self.upVel},{self.roll},{self.pitch},{self.azimuth}'
+        bestposString = f'{self.solStat},{self.rtkStat},{self.bestLat},{self.bestLon},{self.bestHgt},{self.bestLatSig},{self.bestLonSig},{self.bestHgtSig}'
+        bestvelString = f'{self.latency},{self.age},{self.horSpd},{self.heading},{self.verSpd}'
+        bestutmString = f'{self.northing},{self.easting},{self.utmHgt},{self.northSig},{self.eastSig},{self.hgtSig}'
+        
+        return f'{self.get_stat_string()},{self.utc},{inspvasString},{bestposString},{bestvelString},{bestutmString},{self.gpsVel},{self.accuracy}'
+
+
+
 class ObuMessage():
     
     def __init__(self, test_mode = False) -> None:

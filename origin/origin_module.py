@@ -138,3 +138,7 @@ class ObuOrigin:
             except socket.timeout:
                 # print(f"RSU Server Socket timeout")
                 self.rep_q.clear()
+
+
+def run_rsu():
+    rsu = ObuOrigin()

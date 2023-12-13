@@ -2,6 +2,28 @@ from time import time, sleep, strftime, localtime
 from struct import pack, unpack
 
 
+class Message():
+    
+    KEYS = ['name', 'status', 'lastUpdate', 'updateCount', 'updateRate']
+    
+    def __init__(self) -> None:
+        self.name = ''
+        self.status = STATE.DISCONNECTED
+        self.lastUpdate = time()
+        self.updateCount = 0
+        self.updateRate = 0
+        
+    def get_stat(self):
+        return {'name': self.name,
+                'status': self.status,
+                'lastUpdate': self.lastUpdate,
+                'updateCount': self.updateCount,
+                'updateRate': self.updateRate}
+    
+    def get_stat_string(self):
+        return f'{self.name},{self.status},{self.lastUpdate},{self.updateCount},{self.updateRate}'
+
+
 class GPSData(Message):
     NAME = 'GPSDATA'
     KEYS = MSG_COMMON_KEYS + [

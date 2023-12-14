@@ -44,21 +44,27 @@ class ManeuverType:
 
 @dataclass
 class MessageHeader:
-    magic: int = 0xf1f1
-    msg_type: int = 0
-    crc16: int = 0
-    len:int = 0
-    _fmt: str = '>HBHH'
+    magic: int = 0xf1f1  # 2bytes
+    msg_type: int = 0  # 1byte
+    crc16: int = 0  # 2bytes
+    packet_len: int = 0  # 2bytes
 
+    def unpack_header(self, packet: bytes, _fmt: str = '>HBHH'):
+        self.magic, self.msg_type, self.crc16, self.packet_len = unpack(_fmt, packet[:7])
+        
+    def unpack_data(self, data, packet_len = None):
+        # Overwrite for each module
+        if len(data) != packet_len:
+            raise ValueError
 
 @dataclass
-class BsmData:
-    msg_count: int = 0  # 4bytes uint / 0...127
+class BsmData(MessageHeader):
+    msg_count: int = 0  # 1byte uint / 0...127
     tmp_id: int = 0  # 4bytes uint 
     dsecond: int = 0  # 2bytes uint / unit: miliseconds
     lat: int = 0  # 4bytes int / unit: microdegrees/10
     lon: int = 0  # 4bytes int / unit: microdegrees/10
-    elevation: int = 0  # 2bytes int / WGS84 / -4096 ~ 61439 / unit: 10cm
+    elevation: int = 0  # 2bytes uint / WGS84 / -4096 ~ 61439 / unit: 10cm  !question
     semi_major: int = 0  # 1byte uint
     semi_minor: int = 0  # 1byte uint
     orientation: int = 0  # 2bytes uint
@@ -73,10 +79,38 @@ class BsmData:
     width: int = 0  # 2bytes uint / unit: cm
     length: int = 0  # 2bytes uint / unit: cm
     l2id: int = 0  # 4bytes uint
+    
+    def __init__(self):
+        self.data_list = BsmData.__match_args__
+    
+    def set_unpacking(self, name, value):
+        calc_list = {'lat':1/10**7,
+                     'lon':1/10**7,
+                     'elevation':0.1,
+                     'transmission_and_speed':0.02*3.6,
+                     'heading':0.0125,
+                     'width':0.1,
+                     'length':0.1,
+                     }
+        
+        if name in calc_list:
+            if name == 'transmission_and_speed':
+                value = round((value &0b11111111111) * calc_list[name],4)
+            else:
+                value = value * calc_list[name]
+        
+        return object.__setattr__(self, name, value)
+    
+    def unpack_data(self, data, packet_len = None, _fmt:str = '>BIHiiHBBHHHBhhBhHHHI'):
+        # if len(data) != packet_len:
+        #     raise ValueError
+        msg_count, tmp_id, dsecond, lat, lon, elevation, semi_major, semi_minor, orientation, transmission_and_speed, heading, \
+        steering_wheel_angle, accel_long, accel_lat, accel_vert, yaw_rate, brake_system_status, width, length, l2id = [0]*20
+
 
 
 @dataclass
-class BsmLightData:
+class BsmLightData(MessageHeader):
     msg_count: int = 0  # 4bytes uint / 0...127
     tmp_id: int = 0  # 4bytes uint 
     dsecond: int = 0  # 2bytes uint / unit: miliseconds
@@ -98,50 +132,98 @@ class BsmLightData:
     length: int = 0  # 2bytes uint / unit: cm
     l2id: int = 0  # 4bytes uint
     light: int = 0  # 2bytes uint
+    
+    def __setattr__(self, name, value):
+        calc_list = {'lat':1/10**7,
+                     'lon':1/10**7,
+                     'elevation':0.1,
+                     'transmission_and_speed':0.02*3.6,
+                     'heading':0.0125,
+                     'width':0.1,
+                     'length':0.1,
+                     }
+        if name in calc_list:
+            if name == 'transmission_and_speed':
+                value = round((value &0b11111111111) * calc_list[name],4)
+            else:
+                value = value * calc_list[name]
+        
+        return object.__setattr__(self, name, value)
+    
+    def unpack_data(self, data, packet_len = None, _fmt:str = '>BIHiiHBBHHHBhhBhHHHIH'):
+        if len(data) != packet_len:
+            raise ValueError
 
 
 @dataclass
-class DmmData:
+class DmmData(MessageHeader):
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     maneuver_type: int = 0  # 2bytes uint
     remain_distance: int = 0  # 1byte uint
 
+    def unpack_data(self, data, packet_len = None):
+        if len(data) != packet_len:
+            raise ValueError
+        
 
 @dataclass
-class DnmRequestData:
+class DnmRequestData(MessageHeader):
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     remain_distance: int = 0  # 1byte uint
 
+    def unpack_data(self, data, packet_len = None):
+        if len(data) != packet_len:
+            raise ValueError
+        
 
-class DnmResponseData:
+@dataclass
+class DnmResponseData(MessageHeader):
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
 
+    def unpack_data(self, data, packet_len = None):
+        if len(data) != packet_len:
+            raise ValueError
+        
 
 @dataclass
-class DnmDoneData:
+class DnmDoneData(MessageHeader):
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     nego_driving_done: int = 0  # 1byte uint
 
+    def unpack_data(self, data, packet_len = None):
+        if len(data) != packet_len:
+            raise ValueError
+        
 
 @dataclass
-class EdmData:
+class EdmData(MessageHeader):
     sender: int = 0  # 4bytes uint
     maneuver_type: int = 0  # 2bytes uint
     remain_distance: int = 0  # 1byte uint
+
+    def unpack_data(self, data, packet_len = None):
+        if len(data) != packet_len:
+            raise ValueError
 
 
 @dataclass
 class L2idRequestData(MessageHeader):
     msg_type = MessageType.L2ID_REQUEST
 
+    def unpack_data(self, data, packet_len = None):
+        if len(data) != packet_len:
+            raise ValueError
+        
 
 @dataclass
-class L2idResponseData:
+class L2idResponseData(MessageHeader):
     l2id: int = 0  # 4bytes uint
 
-
+    def unpack_data(self, data, packet_len = None):
+        if len(data) != packet_len:
+            raise ValueError

@@ -19,9 +19,9 @@ class SocketModule:
         self.sock = None
         self.is_connected: bool = False
 
-
-        self.run_thread = Thread(target=self.run, name='run', daemon=True)
-        self.run_thread.start()
+        self.run()
+        # self.run_thread = Thread(target=self.run, name='run', daemon=True)
+        # self.run_thread.start()
     
     def create_socket(self, bind = None):
         sock = socket.socket()
@@ -116,6 +116,10 @@ class ObuSocket(SocketModule):
 
         self.sock = self.create_socket(host_bind)
     
+        self.run_send = True
+        self.run_recv = True
+        self.threading_send = Thread()
+        self.threading_recv = Thread()
 
     def queue_data(self, data):
         self.send_queue.append(data)
@@ -134,32 +138,55 @@ class ObuSocket(SocketModule):
                 print(f"{err =}")
             
     
-    def run(self):
+    def send_obu_data(self):
         _config = self.config
         _exist_sock = False if self.sock is None else True
+        _sock = self.sock
         
-        _host_bind = self.host_bind
         _remote_bind = self.remote_bind
 
         _update_interval = _config.update_interval
-        _buffer = _config.buffer
+        
+        is_l2id = False
         
         sync_time = time()
             
         while 1:
+            try:
+                if not is_l2id:
+                    _sock.sendto('l2id_req', _remote_bind)
+                    sleep(1)
+                    continue
+                
+                _sock.sendto("bsm", _remote_bind)
+                _sock.sendto("cim", _remote_bind)
+                
+                if "turn_signal":
+                    _sock.sendto("dmm",_remote_bind)
+            
+                if "reponse":
+                    _sock.sendto("dnm_rep", _remote_bind)
+            
+            except Exception as err:
+                print(f"RSU sned ERROR::{err = }")
+                sleep(0.05)
             
             
             
-            
-            
-            
-            
-            
-            
-            
-            
-            
-        dt = time() - sync_time
-        if _update_interval - dt >0:
-            sleep(_update_interval - dt)
-        sync_time = time()
+            dt = time() - sync_time
+            if _update_interval - dt >0:
+                sleep(_update_interval - dt)
+            sync_time = time()
+
+    def run(self):
+        
+        while 1:
+            if not self.run_recv and self.threading_recv.is_alive():
+                self.threading_recv = Thread(target=self.recv_obu_data)
+                self.threading_recv.start()
+                
+            if not self.run_send and self.threading_send.is_alive():
+                self.threading_send = Thread(target=self.send_obu_data)
+                self.threading_send.start()
+
+            sleep(3)

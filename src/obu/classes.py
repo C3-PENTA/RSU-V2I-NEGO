@@ -1,6 +1,8 @@
 from struct import pack, unpack
 from dataclasses import dataclass
 
+from abc import ABCMeta, abstractmethod
+
 
 class MessageType:
     BSM_NOIT = 1
@@ -41,6 +43,19 @@ class ManeuverType:
     U_TURN = 7
     OVERTAKE = 8
 
+class DataFormat:
+    HEADER: str = '>HBHH'
+    BSM: str = '>BIHiiHBBHHHBhhBhHHHI'
+    BSM_LIGHT: str = '>BIHiiHBBHHHbHHBHHHHIH'
+    DMM: str = '>IIHB'
+    DNM_REQUEST: str = '>IIB'
+    DNM_RESPONSE: str = '>IIB'
+    DNM_DONE: str = '>IIB'
+    EDM: str = '>IHB'
+    L2ID_RESPONSE: str = '>I'
+    L2ID_REQUEST: str = ''
+    
+
 
 @dataclass
 class MessageHeader:
@@ -79,6 +94,9 @@ class BsmData(MessageHeader):
     width: int = 0  # 2bytes uint / unit: cm
     length: int = 0  # 2bytes uint / unit: cm
     l2id: int = 0  # 4bytes uint
+
+    def __post__init__(self):
+        pass
     
     def __init__(self):
         self.data_list = BsmData.__match_args__
@@ -227,3 +245,8 @@ class L2idResponseData(MessageHeader):
     def unpack_data(self, data, packet_len = None):
         if len(data) != packet_len:
             raise ValueError
+
+
+if __name__ == "__main__":
+    test = BsmData()
+    print(test.data_list)

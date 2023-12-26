@@ -62,8 +62,6 @@ class SocketModule:
     
     
     
-    
-    
     def run(self):
         _config = self.config
         _exist_sock = False
@@ -116,27 +114,39 @@ class ObuSocket(SocketModule):
         super().__init__(name, host_bind, remote_bind, *argv, **kward)
         self.send_queue = deque([])
 
+        self.sock = self.create_socket(host_bind)
     
 
     def queue_data(self, data):
         self.send_queue.append(data)
     
+    def recv_obu_data(self):
+        _sock = self.sock
+        _config = self.config
+
+        while 1:
+            try:
+                raw_data, server_addr, recv_time = _sock.recvfrom(_config.buffer), time()
+            
+            except socket.timeout:
+                sleep(1)
+            except Exception as err:
+                print(f"{err =}")
+            
     
     def run(self):
         _config = self.config
-        _exist_sock = False
+        _exist_sock = False if self.sock is None else True
         
         _host_bind = self.host_bind
         _remote_bind = self.remote_bind
-        _connect_socket = self.connect_remote
 
         _update_interval = _config.update_interval
         _buffer = _config.buffer
         
-        _sock = self.create_socket(_host_bind)
         sync_time = time()
             
-            
+        while 1:
             
             
             

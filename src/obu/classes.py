@@ -1,79 +1,54 @@
 from struct import pack, unpack
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from dataclasses_json import dataclass_json
 
 from abc import ABCMeta, abstractmethod
 
-
-class MessageType:
-    BSM_NOIT = 1
-    PIM_NOIT = 2
-    DMM_NOIT = 3
-    DNM_REQUEST = 4
-    DNM_RESPONSE = 5
-    DNM_ACK = 6
-    EDM_NOIT = 7
-    MY_BSM_NOIT = 8
-    CIM_NOIT = 9
-    BSM_LIGHT_NOIT = 51
-    L2ID_REQUEST = 101
-    L2ID_RESPONSE = 102
-    LIGHT_NOIT = 103
-    
-    
-class ExteriorLightType:
-    LOWBEAM_HEADLIGHT_ON = 0
-    HIGHBEAM_HEADLIGHT_ON = 1
-    LEFT_TURN_SIGNAL_ON = 2
-    RIGHT_TURN_SIGNAL_ON = 3
-    HAZARD_SIGNAL_ON = 4
-    AUTOMATIC_LIGHT_CONTROL_ON = 5
-    DAYTIME_RUNNING_LIGHT_ON = 6
-    FOG_LIGHT_ON = 7
-    PARKING_LIGHT_ON = 8
+from config.contant import *
 
 
-class ManeuverType:
-    UNKNOWN = 0
-    STRAIGHT = 1
-    LEFT_LANE_CHANGE = 2
-    RIGHT_LANE_CHANGE = 3
-    STRAIGHT_AT_CROSSROAD = 4
-    LEFT_AT_CROSSROAD = 5
-    RIGHT_AT_CROSSROAD = 6
-    U_TURN = 7
-    OVERTAKE = 8
-
-class DataFormat:
-    HEADER: str = '>HBHH'
-    BSM: str = '>BIHiiHBBHHHBhhBhHHHI'
-    BSM_LIGHT: str = '>BIHiiHBBHHHbHHBHHHHIH'
-    DMM: str = '>IIHB'
-    DNM_REQUEST: str = '>IIB'
-    DNM_RESPONSE: str = '>IIB'
-    DNM_DONE: str = '>IIB'
-    EDM: str = '>IHB'
-    L2ID_RESPONSE: str = '>I'
-    L2ID_REQUEST: str = ''
     
 
-
+@dataclass_json
 @dataclass
-class MessageHeader:
+class _MessageHeader:  # for send
     magic: int = 0xf1f1  # 2bytes
     msg_type: int = 0  # 1byte
     crc16: int = 0  # 2bytes
     packet_len: int = 0  # 2bytes
 
-    def unpack_header(self, packet: bytes, _fmt: str = '>HBHH'):
+    def unpack_header(self, packet: bytes, _fmt: str = DataFormat.HEADER) -> bool:
         self.magic, self.msg_type, self.crc16, self.packet_len = unpack(_fmt, packet[:7])
+        return True
+
+    @abstractmethod
+    def pack_header(self, _fmt: str = DataFormat.HEADER):
+        pass
         
-    def unpack_data(self, data, packet_len = None):
+    @abstractmethod
+    def unpack_data(self, data, packet_len = None, _fmt = None):
         # Overwrite for each module
         if len(data) != packet_len:
             raise ValueError
 
+    
+@dataclass_json
 @dataclass
-class BsmData(MessageHeader):
+class Message:  # for receive
+    raw_packet: bytes
+    data_field = None
+    
+    def __post_init__(self):
+        if self.unpack_header(self.raw_packet):
+            self.msg_type
+        
+    def unpack_header(self, packet: bytes, _fmt: str = DataFormat.HEADER) -> bool:
+        self.magic, self.msg_type, self.crc16, self.packet_len = unpack(_fmt, packet[:7])
+        self.data_field = 0
+        return True
+
+@dataclass
+class BsmData(_MessageHeader):
     msg_count: int = 0  # 1byte uint / 0...127
     tmp_id: int = 0  # 4bytes uint 
     dsecond: int = 0  # 2bytes uint / unit: miliseconds
@@ -119,7 +94,7 @@ class BsmData(MessageHeader):
         
         return object.__setattr__(self, name, value)
     
-    def unpack_data(self, data, packet_len = None, _fmt:str = '>BIHiiHBBHHHBhhBhHHHI'):
+    def unpack_data(self, data, packet_len = None, _fmt:str = DataFormat.BSM):
         # if len(data) != packet_len:
         #     raise ValueError
         msg_count, tmp_id, dsecond, lat, lon, elevation, semi_major, semi_minor, orientation, transmission_and_speed, heading, \
@@ -128,7 +103,7 @@ class BsmData(MessageHeader):
 
 
 @dataclass
-class BsmLightData(MessageHeader):
+class BsmLightData(_MessageHeader):
     msg_count: int = 0  # 4bytes uint / 0...127
     tmp_id: int = 0  # 4bytes uint 
     dsecond: int = 0  # 2bytes uint / unit: miliseconds
@@ -168,85 +143,84 @@ class BsmLightData(MessageHeader):
         
         return object.__setattr__(self, name, value)
     
-    def unpack_data(self, data, packet_len = None, _fmt:str = '>BIHiiHBBHHHBhhBhHHHIH'):
+    def unpack_data(self, data, packet_len = None, _fmt:str = DataFormat.BSM_LIGHT):
         if len(data) != packet_len:
             raise ValueError
 
 
 @dataclass
-class DmmData(MessageHeader):
+class DmmData(_MessageHeader):
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     maneuver_type: int = 0  # 2bytes uint
     remain_distance: int = 0  # 1byte uint
 
-    def unpack_data(self, data, packet_len = None):
+    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DMM):
         if len(data) != packet_len:
             raise ValueError
         
 
 @dataclass
-class DnmRequestData(MessageHeader):
+class DnmRequestData(_MessageHeader):
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     remain_distance: int = 0  # 1byte uint
 
-    def unpack_data(self, data, packet_len = None):
+    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DNM_REQUEST):
         if len(data) != packet_len:
             raise ValueError
         
 
 @dataclass
-class DnmResponseData(MessageHeader):
+class DnmResponseData(_MessageHeader):
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
 
-    def unpack_data(self, data, packet_len = None):
+    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DNM_RESPONSE):
         if len(data) != packet_len:
             raise ValueError
         
 
 @dataclass
-class DnmDoneData(MessageHeader):
+class DnmDoneData(_MessageHeader):
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     nego_driving_done: int = 0  # 1byte uint
 
-    def unpack_data(self, data, packet_len = None):
+    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DNM_DONE):
         if len(data) != packet_len:
             raise ValueError
         
 
 @dataclass
-class EdmData(MessageHeader):
+class EdmData(_MessageHeader):
     sender: int = 0  # 4bytes uint
     maneuver_type: int = 0  # 2bytes uint
     remain_distance: int = 0  # 1byte uint
 
-    def unpack_data(self, data, packet_len = None):
+    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.EDM):
         if len(data) != packet_len:
             raise ValueError
 
 
 @dataclass
-class L2idRequestData(MessageHeader):
+class L2idRequestData(_MessageHeader):
     msg_type = MessageType.L2ID_REQUEST
 
-    def unpack_data(self, data, packet_len = None):
+    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.L2ID_REQUEST):
         if len(data) != packet_len:
             raise ValueError
         
 
 @dataclass
-class L2idResponseData(MessageHeader):
+class L2idResponseData(_MessageHeader):
     l2id: int = 0  # 4bytes uint
 
-    def unpack_data(self, data, packet_len = None):
+    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.L2ID_RESPONSE):
         if len(data) != packet_len:
             raise ValueError
 
 
 if __name__ == "__main__":
-    test = BsmData()
-    print(test.data_list)
+    a = Message(1)

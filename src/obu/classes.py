@@ -32,7 +32,7 @@ class _MessageHeader:  # for send
             raise ValueError
 
     
-@dataclass_json
+@dataclass_json  # 타입 정의된 데이터만 dict, json으로 변환됨
 @dataclass
 class Message:  # for receive
     raw_packet: bytes
@@ -40,7 +40,7 @@ class Message:  # for receive
     
     def __post_init__(self):
         if self.unpack_header(self.raw_packet):
-            self.msg_type
+            print(f'{self.to_dict()}')
         
     def unpack_header(self, packet: bytes, _fmt: str = DataFormat.HEADER) -> bool:
         self.magic, self.msg_type, self.crc16, self.packet_len = unpack(_fmt, packet[:7])
@@ -223,4 +223,15 @@ class L2idResponseData(_MessageHeader):
 
 
 if __name__ == "__main__":
-    a = Message(1)
+    test_bytes = b'\x00\x02\x02\x00\x02\x00\x02\x00\x01\x01\x00\x01\x00\x01'
+    a = Message(test_bytes)
+
+'''
+1. data 관리를 어찌 할 것인가,,,
+    - 데이터를 msg header의 인자로 넣고, 관리 or 한 꺼번에 관리
+    - 받는 데이터는 매번 생성?
+
+2. 차량<->미들웨어의 데이터 관리를 어찌,,,
+    - 데이터와 주기가 매번 다름
+
+'''

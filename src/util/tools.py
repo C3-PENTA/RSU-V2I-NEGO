@@ -16,14 +16,3 @@ class Counter:
             self.count = 0
         return self.count
     
-
-
-if __name__ == '__main__':
-    a = Counter(10)
-    for i in range(400):
-        print(f"{next(a)}")
-        sleep(0.1)
-    # print(next(a))
-    # print(next(a))
-    # print(next(a))
-    # print(next(a))

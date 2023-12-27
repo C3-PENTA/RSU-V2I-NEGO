@@ -41,14 +41,15 @@ class ManeuverType:
     OVERTAKE = 8
 
 class DataFormat:
-    HEADER: str = '>HBHH'
-    BSM: str = '>BIHiiHBBHHHBhhBhHHHI'
-    BSM_LIGHT: str = '>BIHiiHBBHHHbHHBHHHHIH'
-    DMM: str = '>IIHB'
-    DNM_REQUEST: str = '>IIB'
-    DNM_RESPONSE: str = '>IIB'
-    DNM_DONE: str = '>IIB'
-    EDM: str = '>IHB'
-    L2ID_RESPONSE: str = '>I'
+    BYTE_ORDER = '>'
+    HEADER: str = 'HBHH'
+    BSM: str = 'BIHiiHBBHHHBhhBhHHHI'
+    BSM_LIGHT: str = 'BIHiiHBBHHHbHHBHHHHIH'
+    DMM: str = 'IIHB'
+    DNM_REQUEST: str = 'IIB'
+    DNM_RESPONSE: str = 'IIB'
+    DNM_DONE: str = 'IIB'
+    EDM: str = 'IHB'
+    L2ID_RESPONSE: str = 'I'
     L2ID_REQUEST: str = ''
     

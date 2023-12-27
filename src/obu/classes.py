@@ -20,7 +20,9 @@ class _MessageHeader:  # for send
     def __post_init__(self, data: bytes = None):
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
         self.header_fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
+        self.data_fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
         self.data_list = []
+        self.header_list = _MessageHeader.__match_args__
         self.scaling_list = {'lat':1/10**7,
                      'lon':1/10**7,
                      'elevation':0.1,
@@ -35,10 +37,38 @@ class _MessageHeader:  # for send
         self.magic, self.msg_type, self.crc16, self.packet_len = unpack(_fmt, packet[:7])
         return True
 
-    @abstractmethod
-    def pack_header(self, _fmt: str = DataFormat.HEADER):
-        pass
-        
+    
+    def pack_header(self, header_fmt: str = None) -> bytes:
+        data_list = []
+        if header_fmt is None:
+            header_fmt = self.header_fmt
+        for key in self.header_list:
+            value = self.__getattribute__(key)
+            data_list.append(value)
+        return pack(header_fmt,*data_list)
+    
+    
+    def pack_data(self, data_fmt = None):
+        if data_fmt is None:
+            data_fmt = self.data_fmt
+        _data_list = []
+
+        for key in self.data_list:
+            if key in self.header_list:
+                continue
+            value = self.__getattribute__(key)
+            if key in self.scaling_list:
+                value = int(value / self.scaling_list[key])
+            _data_list.append(value)
+
+        # checksum
+        if len(_data_list) != (len(self.data_list) - len(self.header_list)):
+            raise ValueError
+
+        packed_data = pack(data_fmt, *_data_list)
+        self.packet_len = len(packed_data)
+        packed_header = self.pack_header()
+        return packed_header+packed_data
         
     def unpack_data(self, data, _fmt:str = None):
         if _fmt is None:
@@ -98,14 +128,12 @@ class BsmData(_MessageHeader):
     def __init__(self, data: bytes = None):
         super().__post_init__()  # __init__ vs __init_subclass__
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.BSM
+        self.data_fmt =  DataFormat.BYTE_ORDER+DataFormat.BSM
         self.data_list = BsmData.__match_args__
-        
+        self.msg_type = MessageType.MY_BSM_NOIT
     
         if data is not None:
             self.unpack_data(data, self.fmt)
-
-    def pack_data(self, _fmt:str = DataFormat.BSM) -> bytes:
-        return
 
 
 
@@ -236,7 +264,7 @@ if __name__ == "__main__":
     # test_data = _test_data.to_bytes()
     # a = Message(test_bytes)
     b = BsmData(_test_data)
-    print(b)
+    print(len(b.pack_data()))
     
 
 '''

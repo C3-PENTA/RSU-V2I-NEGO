@@ -267,9 +267,10 @@ class DnmResponseData(_MessageHeader):
     receiver: int = 0  # 4bytes uint
     agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
 
-    def __init__(self, l2id: int, agreement_flag: int = 0):
+    def __init__(self, l2id: int, receiver: int, agreement_flag: int = 0):
         super().__post_init__()
         self.sender = l2id
+        self.receiver = receiver
         self.agreement_flag = agreement_flag
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.DNM_RESPONSE
         

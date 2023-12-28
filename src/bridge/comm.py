@@ -110,9 +110,10 @@ class SocketModule:
             
 
 class ObuSocket(SocketModule):
-    def __init__(self, name, host_bind: tuple, remote_bind: tuple, *argv, **kward) -> None:
+    def __init__(self, name, host_bind: tuple, remote_bind: tuple, middleware, *argv, **kward) -> None:
         super().__init__(name, host_bind, remote_bind, *argv, **kward)
         self.send_queue = deque([])
+        self.middleware = middleware
 
         self.sock = self.create_socket(host_bind)
     
@@ -150,6 +151,9 @@ class ObuSocket(SocketModule):
         is_l2id = False
         
         sync_time = time()
+
+        bsm = self.middleware.bsm
+        cim = self.middleware.cim
             
         while 1:
             try:

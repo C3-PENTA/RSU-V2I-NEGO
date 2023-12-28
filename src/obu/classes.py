@@ -26,7 +26,7 @@ class _MessageHeader:  # for send
         self.header_list = _MessageHeader.__match_args__
         self.scaling_list = {'lat':1/10**7,
                      'lon':1/10**7,
-                     'elevation':0.1,
+                     'hgt':0.1,
                      'transmission_and_speed':0.02*3.6,
                      'heading':0.0125,
                      'width':0.1,
@@ -122,7 +122,7 @@ class BsmData(_MessageHeader):
     dsecond: int = 0  # 2bytes uint / unit: miliseconds
     lat: int = 0  # 4bytes int / unit: microdegrees/10
     lon: int = 0  # 4bytes int / unit: microdegrees/10
-    elevation: int = 0  # 2bytes uint / WGS84 / -4096 ~ 61439 / unit: 10cm  !question
+    hgt: int = 0  # 2bytes uint / WGS84 / -4096 ~ 61439 / unit: 10cm  !question
     semi_major: int = 0  # 1byte uint
     semi_minor: int = 0  # 1byte uint
     orientation: int = 0  # 2bytes uint
@@ -181,7 +181,7 @@ class BsmLightData(_MessageHeader):
     dsecond: int = 0  # 2bytes uint / unit: miliseconds
     lat: int = 0  # 4bytes int / unit: microdegrees/10
     lon: int = 0  # 4bytes int / unit: microdegrees/10
-    elevation: int = 0  # 2bytes int / WGS84 / -4096 ~ 61439 / unit: 10cm
+    hgt: int = 0  # 2bytes int / WGS84 / -4096 ~ 61439 / unit: 10cm
     semi_major: int = 0  # 1byte uint
     semi_minor: int = 0  # 1byte uint
     orientation: int = 0  # 2bytes uint
@@ -321,6 +321,23 @@ class CimData(_MessageHeader):
         self.data_list = CimData.__match_args__
 
 
+@dataclass
+class VehicleData:
+    lat: float = 0
+    lon: float = 0
+    hgt: float = 0
+    heading: float = 0
+    speed: float = 0  # km/h
+
+    width: int = 182
+    length: int = 446
+    def __init__(self):
+        self.update_rate = 0
+
+    def update_vehicle(self, **kward):
+        self.__dict__.update(kward)
+        
+        
 
 if __name__ == "__main__":
     test_bytes = b'\x00\x02\x02\x00\x02\x00\x02\x00\x01\x01\x00\x01\x00\x01'

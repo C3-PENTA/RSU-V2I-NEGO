@@ -330,6 +330,7 @@ class VehicleData:
     hgt: float = 0
     heading: float = 0
     speed: float = 0  # km/h
+    turn_signal: int = 0
 
     width: int = 182
     length: int = 446

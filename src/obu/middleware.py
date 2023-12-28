@@ -24,7 +24,7 @@ class Middleware:
 
         self.cim = CimData(l2id)
         self.dnm_rep = DnmResponseData(l2id)
-        self.dmm = DmmData(l2id)
+        self.dmm = DmmData(l2id, self.vehicle_data.turn_signal)
         
     def interchange_data(self):
         self.vehicle_module
@@ -39,3 +39,6 @@ class Middleware:
         self.bsm.__dict__.update(vehicle_data.to_dict())
 
         return True
+    
+    def put_obu_queue(self, *argv):
+        self.obu_module.send_queue.append(argv)

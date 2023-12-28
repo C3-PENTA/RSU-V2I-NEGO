@@ -151,6 +151,9 @@ class ObuSocket(SocketModule):
         is_l2id = False
         
         sync_time = time()
+
+        bsm = self.middleware.bsm
+        cim = self.middleware.cim
             
         while 1:
             try:

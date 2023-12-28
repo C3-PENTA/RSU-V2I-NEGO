@@ -315,12 +315,14 @@ class CimData(_MessageHeader):
     sender: int = 0
     vehicle_type: int = 10
 
-    def __init__(self):
+    def __init__(self, l2id: int):
         super().__post_init__()
+        self.sender = l2id
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.CIM
         self.data_list = CimData.__match_args__
 
 
+@dataclass_json
 @dataclass
 class VehicleData:
     lat: float = 0
@@ -332,9 +334,10 @@ class VehicleData:
     width: int = 182
     length: int = 446
     def __init__(self):
+        self.status = None
         self.update_rate = 0
 
-    def update_vehicle(self, **kward):
+    def update_data(self, **kward):
         self.__dict__.update(kward)
         
         
@@ -346,11 +349,11 @@ if __name__ == "__main__":
     # print(f"{_test_data =}")
     # test_data = _test_data.to_bytes()
     # a = Message(test_bytes)
-    b = L2idRequestData()
+    b = BsmData()
     b.pack_data()
     b.pack_data()
     b.pack_data()
-    print(b)
+    print(b.to_dict())
     
 
 '''

@@ -297,7 +297,7 @@ class L2idRequestData(_MessageHeader):
 
     def __post_init__(self):
         super().__post_init__()
-        self.data_fmt = L2ID.msg_type
+        self.data_fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.L2ID_REQUEST
 
     def pack_data(self, data_fmt=None):
         return self.pack_header()
@@ -318,7 +318,7 @@ class CimData(_MessageHeader):
         super().__post_init__()
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.CIM
         self.data_list = CimData.__match_args__
-        print(f"{self.data_list = }")
+
 
 
 if __name__ == "__main__":
@@ -328,10 +328,10 @@ if __name__ == "__main__":
     # print(f"{_test_data =}")
     # test_data = _test_data.to_bytes()
     # a = Message(test_bytes)
-    b = DnmResponseData(1)
-    print(b.pack_data())
-    print(b.pack_data())
-    print(b.pack_data())
+    b = L2idRequestData()
+    b.pack_data()
+    b.pack_data()
+    b.pack_data()
     print(b)
     
 
@@ -342,5 +342,4 @@ if __name__ == "__main__":
 
 2. 차량<->미들웨어의 데이터 관리를 어찌,,,
     - 데이터와 주기가 매번 다름
-
 '''

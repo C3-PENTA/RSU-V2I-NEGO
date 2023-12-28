@@ -45,6 +45,7 @@ class DataFormat:
     HEADER: str = 'HBHH'
     BSM: str = 'BIHiiHBBHHHBhhBhHHHI'
     BSM_LIGHT: str = 'BIHiiHBBHHHbHHBHHHHIH'
+    CIM:str = 'IB'
     DMM: str = 'IIHB'
     DNM_REQUEST: str = 'IIB'
     DNM_RESPONSE: str = 'IIB'

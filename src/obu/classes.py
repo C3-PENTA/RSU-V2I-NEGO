@@ -22,7 +22,7 @@ class _MessageHeader:  # for send
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
         self.header_fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
         self.data_fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
-        self.data_list = []
+        self.data_list = self.__match_args__
         self.header_list = _MessageHeader.__match_args__
         self.scaling_list = {'lat':1/10**7,
                      'lon':1/10**7,
@@ -38,6 +38,15 @@ class _MessageHeader:  # for send
         self.magic, self.msg_type, self.crc16, self.packet_len = unpack(_fmt, packet[:7])
         return True
 
+    def get_msg_type(self, hdata=None, _fmt=None):
+        if hdata is None:
+            return self.msg_type
+
+        if _fmt is None:
+            _fmt = self.header_fmt
+        magic, msg_type, crc16, packet_len = unpack(_fmt, hdata[:7])
+        return msg_type
+
     
     def pack_header(self, header_fmt: str = None) -> bytes:
         data_list = []
@@ -49,14 +58,12 @@ class _MessageHeader:  # for send
         return pack(header_fmt,*data_list)
     
     
-    def pack_data(self, data_fmt = None):
-        if data_fmt is None:
-            data_fmt = self.data_fmt
+    def pack_data(self, _fmt = None):
+        if _fmt is None:
+            _fmt = self.fmt
         _data_list = []
 
         for key in self.data_list:
-            if key in self.header_list:
-                continue
             value = self.__getattribute__(key)
             if key in self.scaling_list:
                 value = int(value / self.scaling_list[key])
@@ -66,13 +73,15 @@ class _MessageHeader:  # for send
         # if len(_data_list) != (len(self.data_list) - len(self.header_list)):
         #     print(f"{_data_list = }")
         #     raise ValueError
-        try:
-            packed_data = pack(data_fmt, *_data_list)
-        except struct.error:
-            packed_data = b''
+        # try:
+        #     packed_data = pack(_fmt, *_data_list)
+        # except struct.error:
+        #     packed_data = b''
+        # packed_header = self.pack_header()
+
+        packed_data = pack(_fmt, *_data_list)
             
-        packed_header = self.pack_header()
-        return packed_header+packed_data
+        return packed_data
         
     def unpack_data(self, data, _fmt:str = None):
         if _fmt is None:
@@ -107,6 +116,8 @@ class Message:  # for receive
 
 @dataclass
 class BsmData(_MessageHeader):
+    msg_type: int = BSM.msg_type
+    packet_len: int = BSM.packet_len
     msg_count: int = 0  # 1byte uint / 0...127
     tmp_id: int = 0  # 4bytes uint 
     dsecond: int = 0  # 2bytes uint / unit: miliseconds
@@ -133,11 +144,11 @@ class BsmData(_MessageHeader):
         super().__post_init__()
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.BSM
         self.data_fmt =  DataFormat.BYTE_ORDER+DataFormat.BSM
-        self.data_list = BsmData.__match_args__
+        self.data_list = self.__match_args__
 
         # define header
-        self.msg_type = BSM.msg_type
-        self.packet_len = BSM.packet_len
+        # self.msg_type = BSM.msg_type
+        # self.packet_len = BSM.packet_len
     
         if data is not None:
             self.unpack_data(data, self.fmt)
@@ -188,22 +199,12 @@ class BsmLightData(_MessageHeader):
     l2id: int = 0  # 4bytes uint
     light: int = 0  # 2bytes uint
     
-    def __setattr__(self, name, value):
-        calc_list = {'lat':1/10**7,
-                     'lon':1/10**7,
-                     'elevation':0.1,
-                     'transmission_and_speed':0.02*3.6,
-                     'heading':0.0125,
-                     'width':0.1,
-                     'length':0.1,
-                     }
-        if name in calc_list:
-            if name == 'transmission_and_speed':
-                value = round((value &0b11111111111) * calc_list[name],4)
-            else:
-                value = value * calc_list[name]
-        
-        return object.__setattr__(self, name, value)
+    
+    def __init__(self, data: bytes = None):
+        super().__post_init__()
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.BSM
+        self.data_fmt =  DataFormat.BYTE_ORDER+DataFormat.BSM
+        self.data_list = BsmData.__match_args__
     
     def pack_data(self, data_fmt = None):
         if data_fmt is None:
@@ -261,6 +262,8 @@ class DnmRequestData(_MessageHeader):
 
 @dataclass
 class DnmResponseData(_MessageHeader):
+    msg_type: int = DNM_REP.msg_type
+    packet_len: int = DNM_REP.packet_len
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
@@ -307,17 +310,32 @@ class L2idRequestData(_MessageHeader):
 class L2idResponseData(_MessageHeader):
     l2id: int = 0  # 4bytes uint
 
+@dataclass
+class CimData(_MessageHeader):
+    msg_type: int = CIM.msg_type
+    packet_len: int = CIM.packet_len
+    sender: int = 0
+    vehicle_type: int = 10
 
+    def __init__(self):
+        super().__post_init__()
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.CIM
+        self.data_list = CimData.__match_args__
+        print(f"{self.data_list = }")
 
 
 if __name__ == "__main__":
     test_bytes = b'\x00\x02\x02\x00\x02\x00\x02\x00\x01\x01\x00\x01\x00\x01'
     _test_data = bytes.fromhex('F1F1010000002B00000000010000165E581A4B776578000000000000000000000000000000000000000000C801F400000000')
+    _test_data = bytes.fromhex('F1F1010000000300000000000000FFFFFF')
     # print(f"{_test_data =}")
     # test_data = _test_data.to_bytes()
     # a = Message(test_bytes)
-    b = L2idRequestData()
-    print(len(b.pack_data()))
+    b = CimData()
+    print(b.pack_data())
+    print(b.pack_data())
+    print(b.pack_data())
+    print(b)
     
 
 '''

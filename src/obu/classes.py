@@ -1,3 +1,4 @@
+import struct
 from struct import pack, unpack
 from dataclasses import dataclass, asdict
 from dataclasses_json import dataclass_json
@@ -62,11 +63,14 @@ class _MessageHeader:  # for send
             _data_list.append(value)
 
         # checksum
-        if len(_data_list) != (len(self.data_list) - len(self.header_list)):
-            raise ValueError
-
-        packed_data = pack(data_fmt, *_data_list)
-        self.packet_len = len(packed_data)
+        # if len(_data_list) != (len(self.data_list) - len(self.header_list)):
+        #     print(f"{_data_list = }")
+        #     raise ValueError
+        try:
+            packed_data = pack(data_fmt, *_data_list)
+        except struct.error:
+            packed_data = b''
+            
         packed_header = self.pack_header()
         return packed_header+packed_data
         
@@ -126,16 +130,39 @@ class BsmData(_MessageHeader):
 
     
     def __init__(self, data: bytes = None):
-        super().__post_init__()  # __init__ vs __init_subclass__
+        super().__post_init__()
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.BSM
         self.data_fmt =  DataFormat.BYTE_ORDER+DataFormat.BSM
         self.data_list = BsmData.__match_args__
-        self.msg_type = MessageType.MY_BSM_NOIT
+
+        # define header
+        self.msg_type = BSM.msg_type
+        self.packet_len = BSM.packet_len
     
         if data is not None:
             self.unpack_data(data, self.fmt)
 
+    def pack_data(self, data_fmt = None):
+        if data_fmt is None:
+            data_fmt = self.data_fmt
+        _data_list = []
 
+        for key in self.data_list:
+            if key in self.header_list:
+                continue
+            value = self.__getattribute__(key)
+            if key in self.scaling_list:
+                value = int(value / self.scaling_list[key])
+            _data_list.append(value)
+        self.msg_count += 1
+
+        # checksum
+        if len(_data_list) != (len(self.data_list) - len(self.header_list)):
+            raise ValueError
+
+        packed_data = pack(data_fmt, *_data_list)
+        packed_header = self.pack_header()
+        return packed_header+packed_data
 
 @dataclass
 class BsmLightData(_MessageHeader):
@@ -178,17 +205,42 @@ class BsmLightData(_MessageHeader):
         
         return object.__setattr__(self, name, value)
     
-    def unpack_data(self, data, packet_len = None, _fmt:str = DataFormat.BSM_LIGHT):
-        if len(data) != packet_len:
+    def pack_data(self, data_fmt = None):
+        if data_fmt is None:
+            data_fmt = self.data_fmt
+        _data_list = []
+
+        for key in self.data_list:
+            if key in self.header_list:
+                continue
+            value = self.__getattribute__(key)
+            if key in self.scaling_list:
+                value = int(value / self.scaling_list[key])
+            _data_list.append(value)
+        self.msg_count += 1
+
+        # checksum
+        if len(_data_list) != (len(self.data_list) - len(self.header_list)):
             raise ValueError
+
+        packed_data = pack(data_fmt, *_data_list)
+        packed_header = self.pack_header()
+        return packed_header+packed_data
 
 
 @dataclass
 class DmmData(_MessageHeader):
     sender: int = 0  # 4bytes uint
-    receiver: int = 0  # 4bytes uint
+    receiver: int = 0xffffffff  # 4bytes uint
     maneuver_type: int = 0  # 2bytes uint
     remain_distance: int = 0  # 1byte uint
+    
+    def __init__(self, l2id: int, maneuver: int = 0, dist: int = 0):
+        self.msg_type = DMM.msg_type
+        self.packet_len = DMM.packet_len
+        self.sender = l2id
+        self.maneuver_type = maneuver
+        self.remain_distance = dist
 
     def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DMM):
         if len(data) != packet_len:
@@ -201,10 +253,11 @@ class DnmRequestData(_MessageHeader):
     receiver: int = 0  # 4bytes uint
     remain_distance: int = 0  # 1byte uint
 
-    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DNM_REQUEST):
-        if len(data) != packet_len:
-            raise ValueError
-        
+    def __init__(self, l2id: int):
+        self.msg_type = DMM.msg_type
+        self.packet_len = DMM.packet_len
+
+
 
 @dataclass
 class DnmResponseData(_MessageHeader):
@@ -212,9 +265,13 @@ class DnmResponseData(_MessageHeader):
     receiver: int = 0  # 4bytes uint
     agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
 
-    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DNM_RESPONSE):
-        if len(data) != packet_len:
-            raise ValueError
+    def __init__(self, l2id: int, agreement_flag: int = 0):
+        self.sender = l2id
+        self.agreement_flag = agreement_flag
+        self.msg_type = DNM_REP.msg_type
+        self.packet_len = DNM_REP.packet_len
+
+
         
 
 @dataclass
@@ -223,9 +280,7 @@ class DnmDoneData(_MessageHeader):
     receiver: int = 0  # 4bytes uint
     nego_driving_done: int = 0  # 1byte uint
 
-    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DNM_DONE):
-        if len(data) != packet_len:
-            raise ValueError
+
         
 
 @dataclass
@@ -234,27 +289,25 @@ class EdmData(_MessageHeader):
     maneuver_type: int = 0  # 2bytes uint
     remain_distance: int = 0  # 1byte uint
 
-    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.EDM):
-        if len(data) != packet_len:
-            raise ValueError
 
 
 @dataclass
 class L2idRequestData(_MessageHeader):
-    msg_type = MessageType.L2ID_REQUEST
+    msg_type: int = L2ID.msg_type
 
-    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.L2ID_REQUEST):
-        if len(data) != packet_len:
-            raise ValueError
+    def __post_init__(self):
+        super().__post_init__()
+        self.data_fmt = L2ID.msg_type
+
+    def pack_data(self, data_fmt=None):
+        return self.pack_header()
         
 
 @dataclass
 class L2idResponseData(_MessageHeader):
     l2id: int = 0  # 4bytes uint
 
-    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.L2ID_RESPONSE):
-        if len(data) != packet_len:
-            raise ValueError
+
 
 
 if __name__ == "__main__":
@@ -263,7 +316,7 @@ if __name__ == "__main__":
     # print(f"{_test_data =}")
     # test_data = _test_data.to_bytes()
     # a = Message(test_bytes)
-    b = BsmData(_test_data)
+    b = L2idRequestData()
     print(len(b.pack_data()))
     
 

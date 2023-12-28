@@ -62,7 +62,6 @@ class _MessageHeader:  # for send
         if _fmt is None:
             _fmt = self.fmt
         _data_list = []
-
         for key in self.data_list:
             value = self.__getattribute__(key)
             if key in self.scaling_list:
@@ -269,12 +268,10 @@ class DnmResponseData(_MessageHeader):
     agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
 
     def __init__(self, l2id: int, agreement_flag: int = 0):
+        super().__post_init__()
         self.sender = l2id
         self.agreement_flag = agreement_flag
-        self.msg_type = DNM_REP.msg_type
-        self.packet_len = DNM_REP.packet_len
-
-
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.DNM_RESPONSE
         
 
 @dataclass
@@ -331,7 +328,7 @@ if __name__ == "__main__":
     # print(f"{_test_data =}")
     # test_data = _test_data.to_bytes()
     # a = Message(test_bytes)
-    b = CimData()
+    b = DnmResponseData(1)
     print(b.pack_data())
     print(b.pack_data())
     print(b.pack_data())

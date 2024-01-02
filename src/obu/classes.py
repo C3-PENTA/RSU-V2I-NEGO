@@ -3,7 +3,6 @@ from struct import pack, unpack
 from dataclasses import dataclass, asdict
 from dataclasses_json import dataclass_json
 
-from abc import ABCMeta, abstractmethod
 
 from config.obu_contant import *
 # from ..util.tools import Counter
@@ -18,7 +17,7 @@ class _MessageHeader:  # for send
     crc16: int = 0  # 2bytes
     packet_len: int = 0  # 2bytes
     
-    def __post_init__(self, data: bytes = None):
+    def __post_init__(self):
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
         self.header_fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
         self.data_fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
@@ -32,19 +31,12 @@ class _MessageHeader:  # for send
                      'width':0.1,
                      'length':0.1,
         }
-    def unpack_header(self, packet: bytes, _fmt: str = None) -> bool:
+    
+    @classmethod
+    def unpack_header(cls, packet: bytes, _fmt: str = None) -> bool:
         if _fmt is None:
-            _fmt = self.header_fmt
-        self.magic, self.msg_type, self.crc16, self.packet_len = unpack(_fmt, packet[:7])
-        return True
-
-    def get_msg_type(self, hdata=None, _fmt=None):
-        if hdata is None:
-            return self.msg_type
-
-        if _fmt is None:
-            _fmt = self.header_fmt
-        magic, msg_type, crc16, packet_len = unpack(_fmt, hdata[:7])
+            _fmt = cls.header_fmt
+        magic, msg_type, crc16, packet_len = unpack(_fmt, packet[:7])
         return msg_type
 
     
@@ -343,6 +335,19 @@ class VehicleData:
         
         
 
+MSG_TYPE = {MessageType.BSM_NOIT:BsmData,
+            MessageType.DMM_NOIT:DmmData,
+            MessageType.DNM_REQUEST:DnmRequestData,
+            MessageType.DNM_RESPONSE:DnmResponseData,
+            MessageType.DNM_ACK:DnmDoneData,
+            MessageType.EDM_NOIT:EdmData,
+            MessageType.MY_BSM_NOIT:BsmData,
+            MessageType.CIM_NOIT:CimData,
+            MessageType.BSM_LIGHT_NOIT:BsmLightData,
+            MessageType.L2ID_REQUEST:L2idRequestData,
+            MessageType.L2ID_RESPONSE:L2idResponseData,
+    }
+    
 if __name__ == "__main__":
     test_bytes = b'\x00\x02\x02\x00\x02\x00\x02\x00\x01\x01\x00\x01\x00\x01'
     _test_data = bytes.fromhex('F1F1010000002B00000000010000165E581A4B776578000000000000000000000000000000000000000000C801F400000000')

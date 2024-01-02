@@ -4,27 +4,32 @@ import socket
 import json
 from threading import Thread
 
-from config.parameter import CommunicatorConfig
+from config.parameter import VehicleSocketParam, ObuSocketParam, CommunicatorConfig
 
 
 class SocketModule:
-    def __init__(self, name, host_bind: tuple, remote_bind: tuple, *argv, **kward) -> None:
-        self.name = name
-        self.host_bind = host_bind
-        self.remote_bind = remote_bind
-        self.socket_type = kward.get('type') if kward.get('type') else 'tcp'
+    def __init__(self, config: CommunicatorConfig = None) -> None:
+        self.config = config
+        self.name = config.name
+        self.host_bind = config.host_bind
+        self.remote_bind = config.remote_bind
         
-        self.config = CommunicatorConfig
 
         self.sock = None
+        self.status = None
+        self.recv_data = {}
         self.is_connected: bool = False
 
-        self.run()
-        # self.run_thread = Thread(target=self.run, name='run', daemon=True)
-        # self.run_thread.start()
+        # self.run()
+        self.run_thread = Thread(target=self.process, name=self.name, daemon=True)
+        self.run_thread.start()
     
-    def create_socket(self, bind = None):
-        sock = socket.socket()
+    def create_socket(self, bind = None, protocol = None):
+        if protocol == 'udp':
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        else:
+            sock = socket.socket()
+            sock.settimeout(self.config.update_interval*2)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if bind is None:
             bind = self.host_bind
@@ -41,28 +46,31 @@ class SocketModule:
             else:
                 print(f"Don't exist socket")
                 return False
+        if remote_bind is None:
+            if self.remote_bind is not None:
+                remote_bind = self.remote_bind
             
         try:
             sock.connect(remote_bind)
         except Exception as err:
             print(f'{err = }')
+            self.is_connected = False
             return False
 
         return True
+
     
-    def set_data(self, data):
-        self.send_data = json.dumps(data)
-    
-    
-    def get_data(self):
+    def get_data(self) -> dict:
         if not self.is_connected:
             return None
 
-        return self.raw_data
+        return self.recv_data
+    
+    def update_status(self, count):
+        pass
     
     
-    
-    def run(self):
+    def process(self):
         _config = self.config
         _exist_sock = False
         
@@ -89,10 +97,10 @@ class SocketModule:
                     continue
             
             try:
-                _sock.send(self.send_data)
+                _sock.send('temp')
 
                 _raw_data, recv_time = _sock.recv(_buffer), time()
-                self.raw_data = json.loads(_raw_data)
+                self.recv_data.update(json.loads(_raw_data))
             except _sock.timeout:
                 print(f"Raise {self.name} socket timeout...")
 
@@ -110,17 +118,16 @@ class SocketModule:
             
 
 class ObuSocket(SocketModule):
-    def __init__(self, name, host_bind: tuple, remote_bind: tuple, middleware, *argv, **kward) -> None:
-        super().__init__(name, host_bind, remote_bind, *argv, **kward)
+    def __init__(self, config: ObuSocketParam) -> None:
+        super().__init__(config)
         self.send_queue = deque([])
         self.middleware = middleware
 
-        self.sock = self.create_socket(host_bind)
+        self.sock = self.create_socket()
     
         self.run_send = True
         self.run_recv = True
-        self.threading_send = Thread()
-        self.threading_recv = Thread()
+
 
     def queue_data(self, data):
         self.send_queue.append(data)
@@ -138,7 +145,6 @@ class ObuSocket(SocketModule):
             except Exception as err:
                 print(f"{err =}")
             
-    
     def send_obu_data(self):
         _config = self.config
         _exist_sock = False if self.sock is None else True
@@ -183,6 +189,8 @@ class ObuSocket(SocketModule):
             sync_time = time()
 
     def run(self):
+        self.threading_recv = Thread()
+        self.threading_send = Thread()
         
         while 1:
             if not self.run_recv and self.threading_recv.is_alive():
@@ -194,3 +202,67 @@ class ObuSocket(SocketModule):
                 self.threading_send.start()
 
             sleep(3)
+            
+            
+class VehicleSocket(SocketModule):
+    def __init__(self, config: VehicleSocketParam) -> None:
+        self.json_data = {'time':time()}
+        super().__init__(config)
+
+        # self.threading_run = Thread(target=self.process, daemon=True)
+        
+    def set_data(self, data: dict):
+        if not isinstance(data, dict):
+            raise TypeError
+        
+        self.json_data['time'] = time()
+        self.json_data.update(data)
+    
+    def dump_json(self, data=None):
+        if data is None:
+            data = self.json_data
+        dump_data = json.dumps(data)
+        return dump_data
+
+    def load_json(self, data):
+        load_data = json.load(data)
+        return load_data
+    
+    def process(self):
+        
+        _data = self.dump_json
+        load_json = self.load_json
+        _buffer = self.config.buffer
+        _interval = self.config.update_interval
+        
+        update_count = 0
+        sync_time = time()
+        
+        while 1:
+            if not self.is_connected:
+                _sock = self.create_socket()
+                if self.connect_remote(_sock):
+                    self.is_connected = True
+                else:
+                    self.is_connected = False
+                    sleep(2)
+                sync_time = time()
+                continue
+
+            try:
+                
+                _sock.send(_data())
+                
+                raw_vehicle = _sock.recv(_buffer)
+                self.recv_data.update(load_json(raw_vehicle))
+                # update_count += 1
+            
+            except socket.timeout:
+                update_count = 0
+                print(f'Socket Timeout...')
+                
+                
+            dt = time() - sync_time
+            if dt < _interval:
+                sleep(_interval-dt)
+                sync_time = time()

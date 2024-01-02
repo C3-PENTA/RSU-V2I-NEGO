@@ -5,7 +5,7 @@ from dataclasses_json import dataclass_json
 
 from abc import ABCMeta, abstractmethod
 
-from config.contant import *
+from config.obu_contant import *
 # from ..util.tools import Counter
 
     

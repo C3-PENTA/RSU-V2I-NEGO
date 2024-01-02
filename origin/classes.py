@@ -166,7 +166,7 @@ class ObuMessage():
     def __init__(self, test_mode = False) -> None:
 
         self.test_mode = test_mode
-        self.logging_mode = True
+        self.logging_mode = False
         if self.logging_mode:
             self._set_log_file()
             

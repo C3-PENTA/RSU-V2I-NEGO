@@ -34,6 +34,10 @@ class VehicleSocketParam(CommunicatorConfig):
     name = 'vehicle'
     remote_bind = RemoteAddress.VEHICLE_BIND
     host_bind = HostAddress.VEHICLE_BIND
+
+class MiddleWareParam:
+    update_rate: int = 10
+    update_interval = 1/update_rate
     
 if __name__ == '__main__':
     a = ObuSocketParam

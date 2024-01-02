@@ -5,6 +5,7 @@ import json
 from threading import Thread
 
 from config.parameter import VehicleSocketParam, ObuSocketParam, CommunicatorConfig
+from obu.middleware import Middleware
 
 
 class SocketModule:
@@ -118,10 +119,10 @@ class SocketModule:
             
 
 class ObuSocket(SocketModule):
-    def __init__(self, config: ObuSocketParam) -> None:
+    def __init__(self, config: ObuSocketParam, middle_ware: Middleware) -> None:
         super().__init__(config)
         self.send_queue = deque([])
-        self.middleware = middleware
+        self.middle_ware = middle_ware
 
         self.sock = self.create_socket()
     
@@ -129,7 +130,7 @@ class ObuSocket(SocketModule):
         self.run_recv = True
 
 
-    def queue_data(self, data):
+    def put_queue_data(self, data):
         self.send_queue.append(data)
     
     def recv_obu_data(self):

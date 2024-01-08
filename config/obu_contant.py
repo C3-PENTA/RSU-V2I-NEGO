@@ -56,11 +56,11 @@ class DataFormat:
     
 class BSM:
     msg_type: int = MessageType.MY_BSM_NOIT
-    packet_len: int = 50
+    packet_len: int = 45
 
 class DMM:
     msg_type: int = MessageType.DMM_NOIT
-    packet_len: int = 18
+    packet_len: int = 11
     
 class CIM:
     msg_type: int = MessageType.CIM_NOIT
@@ -73,3 +73,20 @@ class DNM_REP:
 class L2ID:
     msg_type: int = MessageType.L2ID_REQUEST
     packet_len: int = 7
+
+class L2ID_RESPONSE:
+    msg_type: int = MessageType.L2ID_RESPONSE
+    packet_len: int = 11
+
+class DNM_DONE:
+    msg_type: int = MessageType.DNM_ACK
+    packet_len: int = 9
+
+class DNM_REQUEST:
+    msg_type: int = MessageType.DNM_REQUEST
+    packet_len: int = 9
+
+class EDM:
+    msg_type: int = MessageType.EDM_NOIT
+    packet_len: int = 7
+    

@@ -35,7 +35,7 @@ class _MessageHeader:  # for send
     @classmethod
     def unpack_header(cls, packet: bytes, _fmt: str = None) -> bool:
         if _fmt is None:
-            _fmt = cls.header_fmt
+            _fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
         magic, msg_type, crc16, packet_len = unpack(_fmt, packet[:7])
         return msg_type
 
@@ -131,7 +131,7 @@ class BsmData(_MessageHeader):
     l2id: int = 0  # 4bytes uint
 
     
-    def __init__(self, data: bytes = None):
+    def __init__(self, data: bytes = None, **kward):
         super().__post_init__()
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.BSM
         self.data_fmt =  DataFormat.BYTE_ORDER+DataFormat.BSM
@@ -191,15 +191,15 @@ class BsmLightData(_MessageHeader):
     light: int = 0  # 2bytes uint
     
     
-    def __init__(self, data: bytes = None):
+    def __init__(self, data: bytes = None, **kward):
         super().__post_init__()
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.BSM
         self.data_fmt =  DataFormat.BYTE_ORDER+DataFormat.BSM
         self.data_list = BsmData.__match_args__
     
-    def pack_data(self, data_fmt = None):
-        if data_fmt is None:
-            data_fmt = self.data_fmt
+    def pack_data(self, _fmt = None):
+        if _fmt is None:
+            data_fmt = self.fmt
         _data_list = []
 
         for key in self.data_list:
@@ -222,32 +222,40 @@ class BsmLightData(_MessageHeader):
 
 @dataclass
 class DmmData(_MessageHeader):
+    packet_len: int = DMM.packet_len
+    msg_type: int = DMM.msg_type
     sender: int = 0  # 4bytes uint
     receiver: int = 0xffffffff  # 4bytes uint
     maneuver_type: int = 0  # 2bytes uint
     remain_distance: int = 0  # 1byte uint
     
-    def __init__(self, l2id: int, maneuver: int = 0, dist: int = 0):
+    def __init__(self, l2id: int, maneuver: int = 0, dist: int = 0, **kward):
+        super().__post_init__()
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.DMM
         self.msg_type = DMM.msg_type
         self.packet_len = DMM.packet_len
         self.sender = l2id
         self.maneuver_type = maneuver
         self.remain_distance = dist
 
-    def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DMM):
-        if len(data) != packet_len:
-            raise ValueError
+    # def unpack_data(self, data, packet_len = None, _fmt = DataFormat.DMM):
+    #     if len(data) != packet_len:
+    #         raise ValueError
         
 
 @dataclass
 class DnmRequestData(_MessageHeader):
+    packet_len: int = DNM_REQUEST.packet_len
+    msg_type: int = DNM_REQUEST.msg_type
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     remain_distance: int = 0  # 1byte uint
 
-    def __init__(self, l2id: int):
-        self.msg_type = DMM.msg_type
-        self.packet_len = DMM.packet_len
+    def __init__(self, **kward):
+        super().__post_init__()
+        self.msg_type = DNM_REQUEST.msg_type
+        self.packet_len = DNM_REQUEST.packet_len
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.DNM_REQUEST
 
 
 
@@ -259,7 +267,7 @@ class DnmResponseData(_MessageHeader):
     receiver: int = 0  # 4bytes uint
     agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
 
-    def __init__(self, l2id: int, receiver: int, agreement_flag: int = 0):
+    def __init__(self, l2id: int, receiver: int, agreement_flag: int = 0, **kward):
         super().__post_init__()
         self.sender = l2id
         self.receiver = receiver
@@ -269,18 +277,29 @@ class DnmResponseData(_MessageHeader):
 
 @dataclass
 class DnmDoneData(_MessageHeader):
+    packet_len: int = DNM_DONE.packet_len
+    msg_type: int = DNM_DONE.msg_type
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
     nego_driving_done: int = 0  # 1byte uint
 
+    def __init__(self, **kward):
+        super().__post_init__()
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.DNM_DONE
 
         
 
 @dataclass
 class EdmData(_MessageHeader):
+    msg_type = EDM.msg_type
+    packet_len = EDM.packet_len
     sender: int = 0  # 4bytes uint
     maneuver_type: int = 0  # 2bytes uint
     remain_distance: int = 0  # 1byte uint
+
+    def __init__(self, **kward):
+        super().__post_init__()
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.EDM
 
 
 
@@ -288,9 +307,9 @@ class EdmData(_MessageHeader):
 class L2idRequestData(_MessageHeader):
     msg_type: int = L2ID.msg_type
 
-    def __post_init__(self):
+    def __init__(self, **kward):
         super().__post_init__()
-        self.data_fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.L2ID_REQUEST
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.L2ID_REQUEST
 
     def pack_data(self, data_fmt=None):
         return self.pack_header()
@@ -298,7 +317,14 @@ class L2idRequestData(_MessageHeader):
 
 @dataclass
 class L2idResponseData(_MessageHeader):
+    msg_type = L2ID_RESPONSE.msg_type
     l2id: int = 0  # 4bytes uint
+    def __init__(self, l2id = None, **kward):
+        super().__post_init__()
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.L2ID_RESPONSE
+        if l2id is None:
+            l2id = 8686
+        self.l2id = l2id
 
 @dataclass
 class CimData(_MessageHeader):
@@ -307,7 +333,7 @@ class CimData(_MessageHeader):
     sender: int = 0
     vehicle_type: int = 10
 
-    def __init__(self, l2id: int):
+    def __init__(self, l2id: int, **kward):
         super().__post_init__()
         self.sender = l2id
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.CIM

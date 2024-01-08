@@ -4,8 +4,10 @@ import socket
 import json
 from threading import Thread
 
+# from src.obu.middleware import Middleware
 from config.parameter import VehicleSocketParam, ObuSocketParam, CommunicatorConfig
-from obu.middleware import Middleware
+from src.obu.classes import L2idRequestData
+# import Middleware
 
 
 class SocketModule:
@@ -15,15 +17,14 @@ class SocketModule:
         self.host_bind = config.host_bind
         self.remote_bind = config.remote_bind
         
-
         self.sock = None
         self.status = None
         self.recv_data = {}
         self.is_connected: bool = False
 
         # self.run()
-        self.run_thread = Thread(target=self.process, name=self.name, daemon=True)
-        self.run_thread.start()
+        # self.run_thread = Thread(target=self.process, name=self.name, daemon=True)
+        # self.run_thread.start()
     
     def create_socket(self, bind = None, protocol = None):
         if protocol == 'udp':
@@ -40,7 +41,7 @@ class SocketModule:
         return sock 
     
     
-    def connect_remote(self, sock: socket.socket = None, remote_bind = None):
+    def connect_remote(self, sock = None, remote_bind = None):
         if sock is None:
             if self.sock is not None:
                 sock = self.sock
@@ -53,10 +54,12 @@ class SocketModule:
             
         try:
             sock.connect(remote_bind)
-        except Exception as err:
-            print(f'{err = }')
-            self.is_connected = False
+        except socket.timeout:
             return False
+        # except Exception as err:
+        #     print(f'{err = }')
+        #     self.is_connected = False
+        #     return False
 
         return True
 
@@ -119,15 +122,17 @@ class SocketModule:
             
 
 class ObuSocket(SocketModule):
-    def __init__(self, config: ObuSocketParam, middle_ware: Middleware) -> None:
-        super().__init__(config)
+    def __init__(self, config: ObuSocketParam, middle_ware) -> None:
+        self.run_recv = False
+        self.run_send = False
         self.send_queue = deque([])
         self.middle_ware = middle_ware
+        super().__init__(config)
 
-        self.sock = self.create_socket()
+        self.sock = self.create_socket(protocol='udp')
     
-        self.run_send = True
-        self.run_recv = True
+        self.thread_process = Thread(target=self.process, daemon=True)
+        self.thread_process.start()
 
 
     def put_queue_data(self, data):
@@ -136,83 +141,85 @@ class ObuSocket(SocketModule):
     def recv_obu_data(self):
         _sock = self.sock
         _config = self.config
+        _buffer = _config.buffer
+        middle_ware = self.middle_ware
+        set_data = middle_ware.set_obu_data
 
-        while 1:
+        while self.run_recv:
+            # print(f'{middle_ware.comm_state = }')
+            # if not middle_ware.comm_state:
+            #     print(f'Not ready...')
+            #     sleep(3)
+            #     continue
+            
             try:
-                raw_data, server_addr, recv_time = _sock.recvfrom(_config.buffer), time()
+                raw_data, server_addr = _sock.recvfrom(_buffer)
+                recv_time = time()
+                set_data(raw_data)
             
             except socket.timeout:
                 sleep(1)
-            except Exception as err:
-                print(f"{err =}")
+            # except Exception as err:
+            #     print(f"{err = }")
             
     def send_obu_data(self):
         _config = self.config
-        _exist_sock = False if self.sock is None else True
         _sock = self.sock
         
         _remote_bind = self.remote_bind
 
         _update_interval = _config.update_interval
+        middle_ware = self.middle_ware
         
-        is_l2id = False
+        bsm = middle_ware.bsm
+        cim = middle_ware.cim
         
         sync_time = time()
 
-        bsm = self.middleware.bsm
-        cim = self.middleware.cim
-            
-        while 1:
+        send_queue = self.send_queue
+        while self.run_send:
             try:
-                if not is_l2id:
-                    _sock.sendto('l2id_req', _remote_bind)
-                    sleep(1)
-                    continue
+                _sock.sendto(middle_ware.bsm.pack_data(), _remote_bind)
+                _sock.sendto(middle_ware.cim.pack_data(), _remote_bind)
+                if send_queue:
+                    queue_data = send_queue.popleft()
+                    _sock.sendto(queue_data.pack_data(), _remote_bind)
                 
-                _sock.sendto("bsm", _remote_bind)
-                _sock.sendto("cim", _remote_bind)
-                
-                if "turn_signal":
-                    _sock.sendto("dmm",_remote_bind)
-            
-                if "reponse":
-                    _sock.sendto("dnm_rep", _remote_bind)
             
             except Exception as err:
                 print(f"RSU sned ERROR::{err = }")
-                sleep(0.05)
-            
-            
+                sleep(3)
             
             dt = time() - sync_time
-            if _update_interval - dt >0:
+            if _update_interval > dt:
                 sleep(_update_interval - dt)
             sync_time = time()
 
-    def run(self):
+    def process(self):
         self.threading_recv = Thread()
         self.threading_send = Thread()
-        
+        # self.run_recv = False
         while 1:
-            if not self.run_recv and self.threading_recv.is_alive():
-                self.threading_recv = Thread(target=self.recv_obu_data)
-                self.threading_recv.start()
-                
-            if not self.run_send and self.threading_send.is_alive():
+            if not self.run_send and not self.threading_send.is_alive():
                 self.threading_send = Thread(target=self.send_obu_data)
+                self.run_send = True
                 self.threading_send.start()
-
-            sleep(3)
-            
+                
+            if not self.run_recv and not self.threading_recv.is_alive():
+                self.threading_recv = Thread(target=self.recv_obu_data)
+                self.run_recv = True
+                self.threading_recv.start()
+            sleep(1)
             
 class VehicleSocket(SocketModule):
     def __init__(self, config: VehicleSocketParam) -> None:
-        self.json_data = {'time':time()}
+        self.json_data = {}
         super().__init__(config)
 
-        # self.threading_run = Thread(target=self.process, daemon=True)
+        self.threading_run = Thread(target=self.process, daemon=True)
+        self.threading_run.start()
         
-    def set_data(self, data: dict):
+    def set_dict_data(self, data: dict):
         if not isinstance(data, dict):
             raise TypeError
         
@@ -223,6 +230,7 @@ class VehicleSocket(SocketModule):
         if data is None:
             data = self.json_data
         dump_data = json.dumps(data)
+        self.json_data.clear()
         return dump_data
 
     def load_json(self, data):
@@ -236,7 +244,6 @@ class VehicleSocket(SocketModule):
         _buffer = self.config.buffer
         _interval = self.config.update_interval
         
-        update_count = 0
         sync_time = time()
         
         while 1:
@@ -244,14 +251,13 @@ class VehicleSocket(SocketModule):
                 _sock = self.create_socket()
                 if self.connect_remote(_sock):
                     self.is_connected = True
+                    sync_time = time()
                 else:
                     self.is_connected = False
                     sleep(2)
-                sync_time = time()
                 continue
 
             try:
-                
                 _sock.send(_data())
                 
                 raw_vehicle = _sock.recv(_buffer)
@@ -259,11 +265,10 @@ class VehicleSocket(SocketModule):
                 # update_count += 1
             
             except socket.timeout:
-                update_count = 0
                 print(f'Socket Timeout...')
                 
                 
             dt = time() - sync_time
             if dt < _interval:
                 sleep(_interval-dt)
-                sync_time = time()
+            sync_time = time()

@@ -20,8 +20,7 @@ def run_modules():
                     module_thread = Thread(target=run_middleware, daemon=True, name=name)
                     module_list[name] = module_thread
                     module_thread.start()
-
-            sleep(1)
+            sleep(3)
 
 
 

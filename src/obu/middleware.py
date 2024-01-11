@@ -72,11 +72,6 @@ class Middleware:
             self.obu_module.put_queue_data(L2idRequestData())
             self.comm_state = False
             return False
-        # if not self.vehicle_module.is_connected:
-        #     print(f"Disconnected...")
-        #     self.comm_state = False
-        #     return False
-        # self.comm_state = True
         return True
 
     def process(self):
@@ -89,8 +84,6 @@ class Middleware:
 
         sync_time = time()
         while 1:
-            print(f"{self.bsm.l2id = }")
-            print(f"{self.l2id = }")
             if not check_state():
                 sleep(3)
                 continue

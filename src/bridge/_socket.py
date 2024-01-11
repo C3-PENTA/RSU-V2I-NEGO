@@ -6,7 +6,7 @@ from threading import Thread
 
 # from src.obu.middleware import Middleware
 from config.parameter import VehicleSocketParam, ObuSocketParam, CommunicatorConfig
-from src.obu.classes import L2idRequestData
+from src.obu.classes import L2idRequestData, VehicleData
 # import Middleware
 
 
@@ -32,7 +32,7 @@ class SocketModule:
             sock.settimeout(self.config.update_interval*2)
         else:
             sock = socket.socket()
-            sock.settimeout(self.config.update_interval*2)
+            sock.settimeout(self.config.update_interval*5)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if bind is None:
             bind = self.host_bind
@@ -54,8 +54,10 @@ class SocketModule:
                 remote_bind = self.remote_bind
             
         try:
+            print(f"{remote_bind = }")
             sock.connect(remote_bind)
         except socket.timeout:
+            print(f'connect time out')
             return False
         # except Exception as err:
         #     print(f'{err = }')
@@ -199,16 +201,17 @@ class ObuSocket(SocketModule):
         self.threading_recv = Thread()
         self.threading_send = Thread()
         # self.run_recv = False
-        while 1:
+        while 0:
+            if not self.run_recv and not self.threading_recv.is_alive():
+                self.threading_recv = Thread(target=self.recv_obu_data)
+                self.run_recv = True
+                self.threading_recv.start()
+
             if not self.run_send and not self.threading_send.is_alive():
                 self.threading_send = Thread(target=self.send_obu_data)
                 self.run_send = True
                 self.threading_send.start()
                 
-            if not self.run_recv and not self.threading_recv.is_alive():
-                self.threading_recv = Thread(target=self.recv_obu_data)
-                self.run_recv = True
-                self.threading_recv.start()
             sleep(1)
             
 class VehicleSocket(SocketModule):
@@ -254,6 +257,7 @@ class VehicleSocket(SocketModule):
                     sync_time = time()
                 else:
                     self.is_connected = False
+                    print(f"1234")
                     sleep(2)
                 continue
 
@@ -261,7 +265,9 @@ class VehicleSocket(SocketModule):
                 _sock.send(_data())
                 
                 raw_vehicle = _sock.recv(_buffer)
-                self.recv_data.update(_load_json(raw_vehicle))
+                vehicle_data = VehicleData().from_json(raw_vehicle)
+                print(f"{vehicle_data = }")
+                # self.recv_data.update(_load_json(raw_vehicle))
                 # update_count += 1
             
             except socket.timeout:

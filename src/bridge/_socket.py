@@ -54,15 +54,14 @@ class SocketModule:
                 remote_bind = self.remote_bind
             
         try:
-            print(f"{remote_bind = }")
             sock.connect(remote_bind)
         except socket.timeout:
             print(f'connect time out')
             return False
-        # except Exception as err:
-        #     print(f'{err = }')
-        #     self.is_connected = False
-        #     return False
+        except Exception as err:
+            print(f'{err = }')
+            self.is_connected = False
+            return False
 
         return True
 
@@ -233,11 +232,13 @@ class VehicleSocket(SocketModule):
         if data is None:
             data = self.json_data
         dump_data = json.dumps(data)
-        self.json_data.clear()
+        # self.json_data.clear()
+        print(f"{dump_data = }")
         return dump_data
 
     def load_json(self, data):
-        load_data = json.load(data)
+        load_data = json.loads(data)
+        print(f"{load_data = }")
         return load_data
     
     def process(self):
@@ -257,21 +258,30 @@ class VehicleSocket(SocketModule):
                     sync_time = time()
                 else:
                     self.is_connected = False
-                    print(f"1234")
                     sleep(2)
                 continue
 
             try:
-                _sock.send(_data())
+                _sock.send(_data().encode())
                 
-                raw_vehicle = _sock.recv(_buffer)
-                vehicle_data = VehicleData().from_json(raw_vehicle)
+                raw_vehicle = _sock.recv(_buffer).decode()
+                # print(f"{raw_vehicle = }")
+                vehicle_data = VehicleData().update_data(_load_json(raw_vehicle))
                 print(f"{vehicle_data = }")
+                # vehicle_data.from_json(raw_vehicle)
                 # self.recv_data.update(_load_json(raw_vehicle))
                 # update_count += 1
             
             except socket.timeout:
                 print(f'Socket Timeout...')
+            except (
+                ConnectionError,
+                ConnectionAbortedError,
+                ConnectionRefusedError,
+                ConnectionResetError,
+            ) as err:
+                self.is_connected = False
+                
                 
                 
             dt = time() - sync_time

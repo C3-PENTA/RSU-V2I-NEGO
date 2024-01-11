@@ -358,7 +358,7 @@ class VehicleData:
         self.status = None
         self.update_rate = 0
 
-    def update_data(self, **kward):
+    def update_data(self, kward):
         self.__dict__.update(kward)
         
         

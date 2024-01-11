@@ -90,3 +90,6 @@ class EDM:
     msg_type: int = MessageType.EDM_NOIT
     packet_len: int = 7
     
+class BSM_LIGHT:
+    msg_type: int = MessageType.BSM_LIGHT_NOIT
+    packet_len: int = 52

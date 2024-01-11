@@ -5,7 +5,7 @@ from dataclasses_json import dataclass_json
 
 
 from config.obu_contant import *
-# from ..util.tools import Counter
+from config.parameter import VehicleSpec
 
     
 
@@ -352,8 +352,8 @@ class VehicleData:
     speed: float = 0  # km/h
     turn_signal: int = 0
 
-    width: int = 182
-    length: int = 446
+    width: int = VehicleSpec.WIDTH
+    length: int = VehicleSpec.LENGTH
     def __init__(self):
         self.status = None
         self.update_rate = 0

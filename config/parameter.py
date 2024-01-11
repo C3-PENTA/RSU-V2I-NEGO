@@ -40,6 +40,10 @@ class VehicleSocketParam(CommunicatorConfig):
 class MiddleWareParam:
     update_rate: int = 10
     update_interval = 1/update_rate
+
+class VehicleSpec:
+    WIDTH: int = 182  # unit: cm
+    LENGTH: int = 446  # unit: cm
     
 if __name__ == '__main__':
     a = ObuSocketParam

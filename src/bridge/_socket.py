@@ -29,6 +29,7 @@ class SocketModule:
     def create_socket(self, bind = None, protocol = None):
         if protocol == 'udp':
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(self.config.update_interval*2)
         else:
             sock = socket.socket()
             sock.settimeout(self.config.update_interval*2)
@@ -145,20 +146,14 @@ class ObuSocket(SocketModule):
         middle_ware = self.middle_ware
         set_data = middle_ware.set_obu_data
 
-        while self.run_recv:
-            # print(f'{middle_ware.comm_state = }')
-            # if not middle_ware.comm_state:
-            #     print(f'Not ready...')
-            #     sleep(3)
-            #     continue
-            
+        while self.run_recv:            
             try:
                 raw_data, server_addr = _sock.recvfrom(_buffer)
                 recv_time = time()
                 set_data(raw_data)
             
             except socket.timeout:
-                sleep(1)
+                pass
             # except Exception as err:
             #     print(f"{err = }")
             
@@ -179,13 +174,18 @@ class ObuSocket(SocketModule):
         send_queue = self.send_queue
         while self.run_send:
             try:
-                _sock.sendto(middle_ware.bsm.pack_data(), _remote_bind)
-                _sock.sendto(middle_ware.cim.pack_data(), _remote_bind)
+                if not middle_ware.l2id:
+                    queue_data = send_queue.popleft()
+                    _sock.sendto(queue_data.pack_data(), _remote_bind)
+                    sleep(1)
+                    continue
+                _sock.sendto(bsm.pack_data(), _remote_bind)
+                _sock.sendto(cim.pack_data(), _remote_bind)
                 if send_queue:
                     queue_data = send_queue.popleft()
                     _sock.sendto(queue_data.pack_data(), _remote_bind)
+                    # print(f'{queue_data = }')
                 
-            
             except Exception as err:
                 print(f"RSU sned ERROR::{err = }")
                 sleep(3)
@@ -240,7 +240,7 @@ class VehicleSocket(SocketModule):
     def process(self):
         
         _data = self.dump_json
-        load_json = self.load_json
+        _load_json = self.load_json
         _buffer = self.config.buffer
         _interval = self.config.update_interval
         
@@ -261,7 +261,7 @@ class VehicleSocket(SocketModule):
                 _sock.send(_data())
                 
                 raw_vehicle = _sock.recv(_buffer)
-                self.recv_data.update(load_json(raw_vehicle))
+                self.recv_data.update(_load_json(raw_vehicle))
                 # update_count += 1
             
             except socket.timeout:

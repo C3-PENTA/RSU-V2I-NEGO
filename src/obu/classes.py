@@ -79,8 +79,8 @@ class _MessageHeader:  # for send
             _fmt = self.fmt
         unpacked_data = unpack(_fmt, data)
 
-        if len(self.data_list) != len(unpacked_data):
-            raise ValueError
+        # if len(self.data_list) != len(unpacked_data):
+        #     raise ValueError
         
         _scaling_list = self.scaling_list
         for name, value in zip(self.data_list, unpacked_data):
@@ -157,6 +157,8 @@ class BsmData(_MessageHeader):
                 value = int(value / self.scaling_list[key])
             _data_list.append(value)
         self.msg_count += 1
+        if self.msg_count >255:
+            self.msg_count = 0
 
         # checksum
         if len(_data_list) != (len(self.data_list) - len(self.header_list)):
@@ -193,8 +195,8 @@ class BsmLightData(_MessageHeader):
     
     def __init__(self, data: bytes = None, **kward):
         super().__post_init__()
-        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.BSM
-        self.data_fmt =  DataFormat.BYTE_ORDER+DataFormat.BSM
+        self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.BSM_LIGHT
+        self.data_fmt =  DataFormat.BYTE_ORDER+DataFormat.BSM_LIGHT
         self.data_list = BsmData.__match_args__
     
     def pack_data(self, _fmt = None):

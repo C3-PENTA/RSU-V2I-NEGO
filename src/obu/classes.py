@@ -9,7 +9,7 @@ from config.parameter import VehicleSpec
 
     
 
-@dataclass_json
+@dataclass_json  # 타입 정의된 데이터만 dict, json으로 변환됨
 @dataclass
 class _MessageHeader:  # for send
     magic: int = 0xf1f1  # 2bytes
@@ -77,6 +77,7 @@ class _MessageHeader:  # for send
     def unpack_data(self, data, _fmt:str = None):
         if _fmt is None:
             _fmt = self.fmt
+        # print(f"{_fmt = } {data = }")
         unpacked_data = unpack(_fmt, data)
 
         # if len(self.data_list) != len(unpacked_data):
@@ -269,7 +270,7 @@ class DnmResponseData(_MessageHeader):
     receiver: int = 0  # 4bytes uint
     agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
 
-    def __init__(self, l2id: int, receiver: int, agreement_flag: int = 0, **kward):
+    def __init__(self, l2id: int, receiver: int = 0, agreement_flag: int = 0, **kward):
         super().__post_init__()
         self.sender = l2id
         self.receiver = receiver

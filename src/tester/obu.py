@@ -36,12 +36,23 @@ class ObuTest():
                 if msg_type == 101:
                     self.queue.append(L2idResponseData(l2id).pack_data(DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.L2ID_RESPONSE))
                     self.is_l2id = True
-                    print(f"{msg_type = }")
+                    # print(f"{msg_type = }")
                 elif msg_type == 5:
                     self.queue.append(TEST_DATA["DNM_DONE"])
-                elif msg_type == 8:
-                    print(f"{recv_raw = }")
+                # elif msg_type == 8:
+                #     print(f"{recv_raw = }")
+                obu_data = MSG_TYPE[msg_type](l2id=l2id)
+                obu_data.unpack_data(recv_raw)
+                if msg_type != 8 and msg_type != 9:
+                    print(f"{obu_data = }")
             except TimeoutError:
+                pass
+            except (
+                ConnectionError,
+                ConnectionAbortedError,
+                ConnectionRefusedError,
+                ConnectionResetError,
+            ):
                 pass
 
     def process(self):

@@ -155,8 +155,13 @@ class ObuSocket(SocketModule):
             
             except socket.timeout:
                 pass
-            # except Exception as err:
-            #     print(f"{err = }")
+            except (
+                ConnectionError,
+                ConnectionAbortedError,
+                ConnectionRefusedError,
+                ConnectionResetError,
+            ) as err:
+                pass
             
     def send_obu_data(self):
         _config = self.config
@@ -176,19 +181,20 @@ class ObuSocket(SocketModule):
         while self.run_send:
             try:
                 if not middle_ware.l2id:
-                    queue_data = send_queue.popleft()
-                    _sock.sendto(queue_data.pack_data(), _remote_bind)
-                    sleep(1)
+                    if send_queue:
+                        queue_data = send_queue.popleft()
+                        _sock.sendto(queue_data.pack_data(), _remote_bind)
+                    sleep(_update_interval)
                     continue
-                _sock.sendto(bsm.pack_data(), _remote_bind)
-                _sock.sendto(cim.pack_data(), _remote_bind)
                 if send_queue:
                     queue_data = send_queue.popleft()
                     _sock.sendto(queue_data.pack_data(), _remote_bind)
+                _sock.sendto(bsm.pack_data(), _remote_bind)
+                _sock.sendto(cim.pack_data(), _remote_bind)
                     # print(f'{queue_data = }')
                 
             except Exception as err:
-                print(f"RSU sned ERROR::{err = }")
+                print(f"RSU send ERROR::{err = }")
                 sleep(3)
             
             dt = time() - sync_time
@@ -200,7 +206,7 @@ class ObuSocket(SocketModule):
         self.threading_recv = Thread()
         self.threading_send = Thread()
         # self.run_recv = False
-        while 0:
+        while 1:
             if not self.run_recv and not self.threading_recv.is_alive():
                 self.threading_recv = Thread(target=self.recv_obu_data)
                 self.run_recv = True
@@ -214,7 +220,8 @@ class ObuSocket(SocketModule):
             sleep(1)
             
 class VehicleSocket(SocketModule):
-    def __init__(self, config: VehicleSocketParam) -> None:
+    def __init__(self, config: VehicleSocketParam, middle_ware) -> None:
+        self.middle_ware = middle_ware
         self.json_data = {}
         super().__init__(config)
 
@@ -233,12 +240,12 @@ class VehicleSocket(SocketModule):
             data = self.json_data
         dump_data = json.dumps(data)
         # self.json_data.clear()
-        print(f"{dump_data = }")
+        # print(f"{dump_data = }")
         return dump_data
 
     def load_json(self, data):
         load_data = json.loads(data)
-        print(f"{load_data = }")
+        # print(f"{load_data = }")
         return load_data
     
     def process(self):
@@ -249,7 +256,7 @@ class VehicleSocket(SocketModule):
         _interval = self.config.update_interval
         
         sync_time = time()
-        
+        middle_ware = self.middle_ware
         while 1:
             if not self.is_connected:
                 _sock = self.create_socket()
@@ -266,8 +273,10 @@ class VehicleSocket(SocketModule):
                 
                 raw_vehicle = _sock.recv(_buffer).decode()
                 # print(f"{raw_vehicle = }")
-                vehicle_data = VehicleData().update_data(_load_json(raw_vehicle))
-                print(f"{vehicle_data = }")
+                # vehicle_data = VehicleData()
+                middle_ware.set_vehicle_data(_load_json(raw_vehicle))
+                # vehicle_data.update_data(_load_json(raw_vehicle))
+                # print(f"{vehicle_data = }")
                 # vehicle_data.from_json(raw_vehicle)
                 # self.recv_data.update(_load_json(raw_vehicle))
                 # update_count += 1

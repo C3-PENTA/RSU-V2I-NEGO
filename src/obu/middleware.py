@@ -52,6 +52,7 @@ class Middleware:
             raise TypeError
         
         self.vehicle_data.update_data(data)
+        self.update_data()
 
     def update_data(self):
         vehicle_data = self.vehicle_data
@@ -59,7 +60,7 @@ class Middleware:
         if not vehicle_module.is_connected:
             return False
         
-        vehicle_data.update_data(vehicle_module.get_data())
+        # vehicle_data.update_data(vehicle_module.get_data())
         self.bsm.__dict__.update(vehicle_data.to_dict())
 
         return True
@@ -75,7 +76,7 @@ class Middleware:
         return True
 
     def process(self):
-        self.vehicle_module = VehicleSocket(VehicleSocketParam)
+        self.vehicle_module = VehicleSocket(VehicleSocketParam, self)
         self.obu_module = ObuSocket(ObuSocketParam, self)
         check_state = self.check_module_state
         _update_interval = self.config.update_interval

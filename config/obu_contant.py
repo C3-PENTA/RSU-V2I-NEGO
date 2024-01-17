@@ -1,7 +1,7 @@
+from enum import Enum
 
 
-
-class MessageType:
+class MessageType(Enum):
     BSM_NOIT = 1
     PIM_NOIT = 2
     DMM_NOIT = 3
@@ -17,7 +17,7 @@ class MessageType:
     LIGHT_NOIT = 103    
     
     
-class ExteriorLightType:
+class ExteriorLightType(Enum):
     LOWBEAM_HEADLIGHT_ON = 0
     HIGHBEAM_HEADLIGHT_ON = 1
     LEFT_TURN_SIGNAL_ON = 2
@@ -29,7 +29,7 @@ class ExteriorLightType:
     PARKING_LIGHT_ON = 8
 
 
-class ManeuverType:
+class ManeuverType(Enum):
     UNKNOWN = 0
     STRAIGHT = 1
     LEFT_LANE_CHANGE = 2

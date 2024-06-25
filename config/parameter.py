@@ -5,14 +5,15 @@ class RemoteAddress:
     VEHICLE_BIND = ('localhost', 20000)
     # OBU_BIND = ('',63113)
     #tester
-    OBU_BIND = ('localhost',63113)
+    # OBU_BIND = ('localhost',63113)
+    OBU_BIND = ("192.168.20.150", 63113)
 
 
 class HostAddress:
     VEHICLE_BIND = ('localhost', 28000)
     # OBU_BIND = ('',50002)
     #tester
-    OBU_BIND = ('localhost',50004)
+    OBU_BIND = ('192.168.20.2',50004)
 
 
 class CommunicatorConfig:

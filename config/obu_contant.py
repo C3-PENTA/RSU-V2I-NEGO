@@ -55,8 +55,8 @@ class DataFormat:
     L2ID_REQUEST: str = ''
     
 class BSM:
-    msg_type: int = MessageType.MY_BSM_NOIT
-    packet_len: int = 45
+    msg_type: int = MessageType.BSM_NOIT
+    packet_len: int = 50
 
 class DMM:
     msg_type: int = MessageType.DMM_NOIT

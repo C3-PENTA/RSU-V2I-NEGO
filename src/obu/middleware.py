@@ -1,9 +1,10 @@
 from collections import deque
 from time import sleep, time
 
-from ..bridge._socket import ObuSocket, VehicleSocket
-from config.parameter import ObuSocketParam, VehicleSocketParam, MiddleWareParam
-from .classes import *
+from config.parameter import MiddleWareParam, ObuSocketParam, VehicleSocketParam
+from src.bridge._socket import ObuSocket, VehicleSocket
+from src.obu.classes import *
+
 
 class Middleware:
     def __init__(self) -> None:
@@ -37,14 +38,18 @@ class Middleware:
         # msg_type = self.unpack_msg_type(data)
         obu_data = MSG_TYPE[msg_type](l2id = self.l2id)
         obu_data.unpack_data(data)
-        if msg_type == 4:
+        if msg_type == MessageType.DNM_REQUEST:
             self.receiver = obu_data.sender
             self.obu_module.put_queue_data(DnmResponseData(self.l2id, self.receiver))
-        elif msg_type == 102:
+        elif msg_type == MessageType.L2ID_RESPONSE:
             self.l2id = obu_data.l2id
             self.bsm.l2id = self.l2id
             self.cim.sender = self.l2id
 
+        if obu_data.msg_type == MessageType.DMM_NOIT:
+            print(f"Receive DMM_NOIT from OBU: {obu_data}")
+        elif obu_data.msg_type == MessageType.EDM_NOIT:
+            print(f"Receive EDM_NOIT from OBU: {obu_data}")
         self.vehicle_module.set_dict_data(obu_data.to_dict())
         
     def set_vehicle_data(self, data: dict):

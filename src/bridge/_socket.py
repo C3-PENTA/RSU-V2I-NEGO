@@ -1,12 +1,15 @@
-from collections import deque
-from time import time, sleep
-import socket
 import json
+import socket
+from collections import deque
 from threading import Thread
+from time import sleep, time
 
 # from src.obu.middleware import Middleware
-from config.parameter import VehicleSocketParam, ObuSocketParam, CommunicatorConfig
+from config.parameter import CommunicatorConfig, ObuSocketParam, VehicleSocketParam
+
+# from src.obu.middleware import Middleware
 from src.obu.classes import L2idRequestData, VehicleData
+
 # import Middleware
 
 
@@ -93,7 +96,7 @@ class SocketModule:
             if not self.is_connected:
                 if not _exist_sock:
                     _sock =  _create_socket(_host_bind)
-                    _sock.settimeout(1/_update_interval)
+                    # _sock.settimeout(1/_update_interval)
                     _exist_sock = True
                 if _connect_socket(_sock, _remote_bind):
                     self.is_connected = True
@@ -184,6 +187,7 @@ class ObuSocket(SocketModule):
                     if send_queue:
                         queue_data = send_queue.popleft()
                         _sock.sendto(queue_data.pack_data(), _remote_bind)
+                        # print(f"Request L2ID: {queue_data}")
                     sleep(_update_interval)
                     continue
                 if send_queue:
@@ -191,6 +195,8 @@ class ObuSocket(SocketModule):
                     _sock.sendto(queue_data.pack_data(), _remote_bind)
                 _sock.sendto(bsm.pack_data(), _remote_bind)
                 _sock.sendto(cim.pack_data(), _remote_bind)
+                # print(f"BSM DATA:: {bsm}")
+                # print(f"CIM DATA:: {cim}")
                     # print(f'{queue_data = }')
                 
             except Exception as err:
@@ -235,6 +241,7 @@ class VehicleSocket(SocketModule):
         self.json_data['time'] = time()
         self.json_data.update(data)
     
+    #TODO: 차량으로 보낼 데이터 정의해야 함
     def dump_json(self, data=None):
         if data is None:
             data = self.json_data

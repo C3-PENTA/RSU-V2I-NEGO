@@ -1,13 +1,12 @@
 import struct
+from dataclasses import asdict, dataclass
 from struct import pack, unpack
-from dataclasses import dataclass, asdict
-from dataclasses_json import dataclass_json
 
+from dataclasses_json import dataclass_json
 
 from config.obu_contant import *
 from config.parameter import VehicleSpec
 
-    
 
 @dataclass_json  # 타입 정의된 데이터만 dict, json으로 변환됨
 @dataclass
@@ -158,11 +157,12 @@ class BsmData(_MessageHeader):
                 value = int(value / self.scaling_list[key])
             _data_list.append(value)
         self.msg_count += 1
-        if self.msg_count >255:
+        if self.msg_count > 128:
             self.msg_count = 0
 
         # checksum
         if len(_data_list) != (len(self.data_list) - len(self.header_list)):
+            print(f"Raise BSM data len Error")
             raise ValueError
 
         packed_data = pack(data_fmt, *_data_list)
@@ -309,6 +309,7 @@ class EdmData(_MessageHeader):
 @dataclass
 class L2idRequestData(_MessageHeader):
     msg_type: int = L2ID.msg_type
+    packet_len = L2ID.packet_len
 
     def __init__(self, **kward):
         super().__post_init__()

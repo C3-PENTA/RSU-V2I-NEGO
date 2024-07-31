@@ -29,7 +29,17 @@ class ExteriorLightType(IntEnum):
     PARKING_LIGHT_ON = 8
 
 
-class ManeuverType(IntEnum):
+class EdmManeuverType(IntEnum):
+    UNKNOWN = 0
+    LANE_CHANGE = 1
+    STRAIGHT_AT_CROSSROAD = 2
+    LEFT_AT_CROSSROAD = 3
+    RIGHT_AT_CROSSROAD = 4
+    U_TURN = 7
+    OVERTAKE = 8
+
+
+class DmmManeuverType(IntEnum):
     UNKNOWN = 0
     STRAIGHT = 1
     LEFT_LANE_CHANGE = 2
@@ -53,6 +63,7 @@ class DataFormat(StrEnum):
     EDM: str = 'IHB'
     L2ID_RESPONSE: str = 'I'
     L2ID_REQUEST: str = ''
+    
     
 class BSM:
     msg_type: int = MessageType.BSM_NOIT
@@ -81,7 +92,7 @@ class L2ID_RESPONSE:
 class DNM_DONE:
     msg_type: int = MessageType.DNM_ACK
     packet_len: int = 9
-
+    
 class DNM_REQUEST:
     msg_type: int = MessageType.DNM_REQUEST
     packet_len: int = 9
@@ -93,3 +104,4 @@ class EDM:
 class BSM_LIGHT:
     msg_type: int = MessageType.BSM_LIGHT_NOIT
     packet_len: int = 52
+    

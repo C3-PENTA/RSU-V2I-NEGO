@@ -74,7 +74,7 @@ class ManeuverCommandType(IntEnum):
 
 class ManeuverLaneType(IntEnum): # 내 차량이 가야할 곳
     NONE = 0
-    SAME_LANE = 1
+    CURRENT_LANE = 1
     LEFT_LANE = 2
     RIGHT_LANE = 3
     

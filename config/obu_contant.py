@@ -64,6 +64,20 @@ class DataFormat(StrEnum):
     L2ID_RESPONSE: str = 'I'
     L2ID_REQUEST: str = ''
     
+class ManeuverCommandType(IntEnum):
+    NONE = 0
+    WAIT = 1
+    STOP = 2
+    SLOW_DOWN = 3
+    LANE_CHANGE = 4
+    OVERTAKING = 5
+
+class ManeuverLaneType(IntEnum): # 내 차량이 가야할 곳
+    NONE = 0
+    SAME_LANE = 1
+    LEFT_LANE = 2
+    RIGHT_LANE = 3
+    
     
 class BSM:
     msg_type: int = MessageType.BSM_NOIT

@@ -72,11 +72,13 @@ class ManeuverCommandType(IntEnum):
     LANE_CHANGE = 4
     OVERTAKING = 5
 
-class ManeuverLaneType(IntEnum): # 내 차량이 가야할 곳
+class ManeuverLaneType(IntEnum): # 내 차량이 가야할 차선
     NONE = 0
     CURRENT_LANE = 1
     LEFT_LANE = 2
     RIGHT_LANE = 3
+    SHOULDER = 4
+    OFF_ROAD = 5
     
     
 class BSM:
@@ -114,6 +116,7 @@ class DNM_REQUEST:
 class EDM:
     msg_type: int = MessageType.EDM_NOIT
     packet_len: int = 7
+    
     
 class BSM_LIGHT:
     msg_type: int = MessageType.BSM_LIGHT_NOIT

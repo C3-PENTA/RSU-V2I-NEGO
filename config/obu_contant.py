@@ -80,6 +80,9 @@ class ManeuverLaneType(IntEnum): # 내 차량이 가야할 차선
     SHOULDER = 4
     OFF_ROAD = 5
     
+class AgreementFlag(IntEnum):
+    DISAGREEMENT = 0
+    AGREEMENT = 1
     
 class BSM:
     msg_type: int = MessageType.BSM_NOIT

@@ -1,6 +1,7 @@
 import struct
 from dataclasses import asdict, dataclass
 from struct import pack, unpack
+from time import time
 
 from dataclasses_json import dataclass_json
 
@@ -15,6 +16,7 @@ class _MessageHeader:  # for send
     msg_type: int = 0  # 1byte
     crc16: int = 0  # 2bytes
     packet_len: int = 0  # 2bytes
+    timestamp: float = time()
     
     def __post_init__(self):
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER
@@ -199,7 +201,9 @@ class BsmLightData(_MessageHeader):
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.BSM_LIGHT
         self.data_fmt =  DataFormat.BYTE_ORDER+DataFormat.BSM_LIGHT
         self.data_list = BsmData.__match_args__
-    
+        if data is not None:
+            self.unpack_data(data, self.fmt)
+
     def pack_data(self, _fmt = None):
         if _fmt is None:
             data_fmt = self.fmt
@@ -225,11 +229,18 @@ class BsmLightData(_MessageHeader):
 
 @dataclass
 class DmmData(_MessageHeader):
+    '''
+    DMM Maneuver Type 설명
+    차로 주행: 차선 내 직진주행(1)
+    차로 변경: 좌차로 변경(2), 우차로 변경(3)
+    교차로 통과: 직진(4), 좌회전(5), 우회전(6)
+    기타: 유턴(7), 추월(8)
+    '''
     packet_len: int = DMM.packet_len
     msg_type: int = DMM.msg_type
     sender: int = 0  # 4bytes uint
     receiver: int = 0xffffffff  # 4bytes uint
-    maneuver_type: int = 0  # 2bytes uint
+    maneuver_type: int = 0  # 2bytes uint 
     remain_distance: int = 0  # 1byte uint
     
     def __init__(self, l2id: int, maneuver: int = 0, dist: int = 0, **kward):
@@ -268,7 +279,7 @@ class DnmResponseData(_MessageHeader):
     packet_len: int = DNM_REP.packet_len
     sender: int = 0  # 4bytes uint
     receiver: int = 0  # 4bytes uint
-    agreement_flag: int = 0  # 1byte uint / 0: disagreement 1: agreement
+    agreement_flag: int = AgreementFlag.AGREEMENT  # 1byte uint / 0: disagreement 1: agreement
 
     def __init__(self, l2id: int, receiver: int = 0, agreement_flag: int = 0, **kward):
         super().__post_init__()
@@ -294,6 +305,12 @@ class DnmDoneData(_MessageHeader):
 
 @dataclass
 class EdmData(_MessageHeader):
+    '''
+    EDM Maneuver Type 설명
+    차로 변경: (1)
+    교차로 통과: 직진(2), 좌회전(3), 우회전(4)
+    기타: 유턴(7), 추월(8)
+    '''
     msg_type = EDM.msg_type
     packet_len = EDM.packet_len
     sender: int = 0  # 4bytes uint
@@ -346,7 +363,18 @@ class CimData(_MessageHeader):
 
 @dataclass_json
 @dataclass
+class ObuToVehicleData:
+    timestamp: float = time()
+    msg_type: MessageType = 0
+    maneuver_command: ManeuverCommandType = ManeuverCommandType.NONE
+    maneuver_lane: ManeuverLaneType = ManeuverLaneType.NONE
+    
+    
+    
+@dataclass_json
+@dataclass
 class VehicleData:
+    timestamp: float = time() 
     lat: float = 0
     lon: float = 0
     hgt: float = 0

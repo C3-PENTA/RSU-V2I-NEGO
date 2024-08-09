@@ -1,14 +1,21 @@
 import json
 import socket
-from collections import deque
+from collections import defaultdict, deque
 from threading import Thread
 from time import sleep, time
 
 # from src.obu.middleware import Middleware
+from config.obu_contant import MessageType
 from config.parameter import CommunicatorConfig, ObuSocketParam, VehicleSocketParam
 
 # from src.obu.middleware import Middleware
-from src.obu.classes import L2idRequestData, VehicleData
+from src.obu.classes import (
+    L2idRequestData,
+    ObuToVehicleData,
+    VehicleData,
+    _MessageHeader,
+)
+from src.obu.middleware import Middleware
 
 # import Middleware
 
@@ -68,6 +75,21 @@ class SocketModule:
 
         return True
 
+    def dump_json(self, data=None):
+        if data is None or not data:
+            result_data = {}
+        else:
+            result_data = data
+        dump_data = json.dumps(result_data)
+        # self.json_data.clear()
+        # print(f"{dump_data = }")
+        return dump_data
+
+    def load_json(self, data):
+        load_data = json.loads(data)
+        # print(f"{load_data = }")
+        return load_data
+    
     
     def get_data(self) -> dict:
         if not self.is_connected:
@@ -127,7 +149,7 @@ class SocketModule:
             
 
 class ObuSocket(SocketModule):
-    def __init__(self, config: ObuSocketParam, middle_ware) -> None:
+    def __init__(self, config: ObuSocketParam, middle_ware: Middleware) -> None:
         self.run_recv = False
         self.run_send = False
         self.send_queue = deque([])
@@ -175,7 +197,7 @@ class ObuSocket(SocketModule):
         _update_interval = _config.update_interval
         middle_ware = self.middle_ware
         
-        bsm = middle_ware.bsm
+        bsm = middle_ware.ego_bsm
         cim = middle_ware.cim
         
         sync_time = time()
@@ -183,7 +205,7 @@ class ObuSocket(SocketModule):
         send_queue = self.send_queue
         while self.run_send:
             try:
-                if not middle_ware.l2id:
+                if not middle_ware.ego_l2id:
                     if send_queue:
                         queue_data = send_queue.popleft()
                         _sock.sendto(queue_data.pack_data(), _remote_bind)
@@ -226,44 +248,36 @@ class ObuSocket(SocketModule):
             sleep(1)
             
 class VehicleSocket(SocketModule):
-    def __init__(self, config: VehicleSocketParam, middle_ware) -> None:
+    def __init__(self, config: VehicleSocketParam, middle_ware: Middleware) -> None:
         self.middle_ware = middle_ware
-        self.json_data = {}
+        self.json_data = defaultdict(lambda: None)
+        self.send_queue = deque([])
         super().__init__(config)
 
         self.threading_run = Thread(target=self.process, daemon=True)
         self.threading_run.start()
         
-    def set_dict_data(self, data: dict):
+    def set_dict_data(self, data: _MessageHeader):
         if not isinstance(data, dict):
             raise TypeError
         
-        self.json_data['time'] = time()
-        self.json_data.update(data)
-    
-    #TODO: 차량으로 보낼 데이터 정의해야 함
-    def dump_json(self, data=None):
-        if data is None:
-            data = self.json_data
-        dump_data = json.dumps(data)
-        # self.json_data.clear()
-        # print(f"{dump_data = }")
-        return dump_data
+        obu2veh_data = ObuToVehicleData()
+        obu2veh_data.msg_type = data.msg_type
+        #TODO: 차량으로 보낼 협상 데이터 정의해야 함
 
-    def load_json(self, data):
-        load_data = json.loads(data)
-        # print(f"{load_data = }")
-        return load_data
+        self.send_queue.append(obu2veh_data)
+        
     
     def process(self):
         
-        _data = self.dump_json
+        _dump_data = self.dump_json
         _load_json = self.load_json
+        _send_queue = self.send_queue
         _buffer = self.config.buffer
         _interval = self.config.update_interval
         
         sync_time = time()
-        middle_ware = self.middle_ware
+        _middle_ware = self.middle_ware
         while 1:
             if not self.is_connected:
                 _sock = self.create_socket()
@@ -276,12 +290,16 @@ class VehicleSocket(SocketModule):
                 continue
 
             try:
-                _sock.send(_data().encode())
+                if _send_queue:
+                    obu2veh_data = _send_queue.popleft()
+                else:
+                    obu2veh_data = ObuToVehicleData()
+                _sock.send(obu2veh_data.to_json().encode())
                 
                 raw_vehicle = _sock.recv(_buffer).decode()
                 # print(f"{raw_vehicle = }")
                 # vehicle_data = VehicleData()
-                middle_ware.set_vehicle_data(_load_json(raw_vehicle))
+                _middle_ware.set_vehicle_data(_load_json(raw_vehicle))
                 # vehicle_data.update_data(_load_json(raw_vehicle))
                 # print(f"{vehicle_data = }")
                 # vehicle_data.from_json(raw_vehicle)
@@ -297,7 +315,6 @@ class VehicleSocket(SocketModule):
                 ConnectionResetError,
             ) as err:
                 self.is_connected = False
-                
                 
                 
             dt = time() - sync_time

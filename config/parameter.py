@@ -41,6 +41,7 @@ class VehicleSocketParam(CommunicatorConfig):
 class MiddleWareParam:
     update_rate: int = 10
     update_interval = 1/update_rate
+    nearby_data_timeout = 3
 
 class VehicleSpec:
     WIDTH: int = 182  # unit: cm

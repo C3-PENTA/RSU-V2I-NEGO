@@ -1,5 +1,5 @@
 import struct
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from struct import pack, unpack
 from time import time
 
@@ -281,7 +281,7 @@ class DnmResponseData(_MessageHeader):
     receiver: int = 0  # 4bytes uint
     agreement_flag: int = AgreementFlag.AGREEMENT  # 1byte uint / 0: disagreement 1: agreement
 
-    def __init__(self, l2id: int, receiver: int = 0, agreement_flag: int = 0, **kward):
+    def __init__(self, l2id: int, receiver: int = 0, agreement_flag: int = AgreementFlag.AGREEMENT, **kward):
         super().__post_init__()
         self.sender = l2id
         self.receiver = receiver
@@ -367,8 +367,7 @@ class ObuToVehicleData:
     timestamp: float = time()
     msg_type: MessageType = 0
     maneuver_command: ManeuverCommandType = ManeuverCommandType.NONE
-    maneuver_lane: ManeuverLaneType = ManeuverLaneType.NONE
-    
+    obu_message: dict = field(default_factory=dict)
     
     
 @dataclass_json

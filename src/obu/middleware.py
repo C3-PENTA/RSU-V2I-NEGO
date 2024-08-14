@@ -13,8 +13,8 @@ class Middleware:
 
         self.comm_state = False
         self.obu_queue = deque([])
-        self.proximity_bsm = {}
-        self.proximity_rsu_data = {}
+        self.nearby_bsm = {}
+        self.nearby_rsu_data = {}
         
     def __init_data(self):
         self.ego_l2id = 0
@@ -40,7 +40,7 @@ class Middleware:
             current_timestamp = time()
             for vehicle_l2id, vehicle_data in data.items():
                 vehicle_data: BsmData
-                if current_timestamp - vehicle_data.timestamp > 3:
+                if current_timestamp - vehicle_data.timestamp > MiddleWareParam.nearby_data_timeout:
                     data.pop(vehicle_l2id)
 
     def set_obu_data(self, data: bytes):
@@ -51,25 +51,25 @@ class Middleware:
         if msg_type == MessageType.DNM_REQUEST:
             self.receiver = obu_data.sender
             self.obu_module.put_queue_data(DnmResponseData(self.ego_l2id, self.receiver))
-            self.proximity_rsu_data[MessageType.DNM_REQUEST] = obu_data
+            self.nearby_rsu_data[MessageType.DNM_REQUEST] = obu_data
         elif msg_type == MessageType.L2ID_RESPONSE:
             self.ego_l2id = obu_data.l2id
             self.ego_bsm.l2id = self.ego_l2id
             self.cim.sender = self.ego_l2id
-            self.proximity_rsu_data[MessageType.L2ID_RESPONSE] = obu_data
+            self.nearby_rsu_data[MessageType.L2ID_RESPONSE] = obu_data
         elif msg_type == MessageType.BSM_NOIT or MessageType.BSM_LIGHT_NOIT:
-            self.proximity_bsm[obu_data.l2id] = obu_data
+            self.nearby_bsm[obu_data.l2id] = obu_data
         elif msg_type == MessageType.DMM_NOIT:
             print(f"Receive DMM_NOIT from OBU: {obu_data}")
             self.vehicle_module.set_dict_data(obu_data)
-            self.proximity_rsu_data[MessageType.DMM_NOIT] = obu_data
+            self.nearby_rsu_data[MessageType.DMM_NOIT] = obu_data
         elif msg_type == MessageType.EDM_NOIT:
             print(f"Receive EDM_NOIT from OBU: {obu_data}")
             self.vehicle_module.set_dict_data(obu_data)
-            self.proximity_rsu_data[MessageType.EDM_NOIT] = obu_data
-            
+            self.nearby_rsu_data[MessageType.EDM_NOIT] = obu_data
         # 시나리오4에서 DNM Done을 수신해야 차선변경 가능
-        
+        elif msg_type == MessageType.DNM_ACK:
+            self.nearby_rsu_data[MessageType.DNM_ACK] = obu_data
         
     def set_vehicle_data(self, data: dict):
         if not isinstance(data, dict):
@@ -108,8 +108,8 @@ class Middleware:
         _update_interval = self.config.update_interval
         put_obu_queue = self.obu_module.put_queue_data
         
-        _proximity_bsm = self.proximity_bsm
-        _proximity_rsu_data = self.proximity_rsu_data
+        _nearby_bsm = self.nearby_bsm
+        _nearby_rsu_data = self.nearby_rsu_data
         _delete_time_error_data = self.delete_time_error_data
 
         sync_time = time()
@@ -122,10 +122,11 @@ class Middleware:
             if _vehicle_data.turn_signal:
                 put_obu_queue(DmmData(self.ego_l2id, _vehicle_data.turn_signal))
             
-            if _proximity_bsm:
-                _delete_time_error_data(_proximity_bsm)
-            if _proximity_rsu_data:
-                _delete_time_error_data(_proximity_rsu_data)
+            # 오래된 OBU 데이터 소거
+            if _nearby_bsm:
+                _delete_time_error_data(_nearby_bsm)
+            if _nearby_rsu_data:
+                _delete_time_error_data(_nearby_rsu_data)
                 
             dt = time() - sync_time
             if _update_interval > dt:

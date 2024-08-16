@@ -5,7 +5,7 @@ from threading import Thread
 from time import sleep, time
 
 # from src.obu.middleware import Middleware
-from config.obu_contant import MessageType
+from config.obu_contant import ManeuverCommandType, MessageType
 from config.parameter import CommunicatorConfig, ObuSocketParam, VehicleSocketParam
 
 # from src.obu.middleware import Middleware
@@ -48,7 +48,7 @@ class SocketModule:
             bind = self.host_bind
         sock.bind(bind)
 
-        self.sock = sock
+        # self.sock = sock
         return sock 
     
     
@@ -191,14 +191,17 @@ class ObuSocket(SocketModule):
     def send_obu_data(self):
         _config = self.config
         _sock = self.sock
-        
         _remote_bind = self.remote_bind
+        
+        tablet_sock = self.create_socket(('',50001),'udp')
+        tablet_bind = ('',50000)  # TODO: ETRI 태블릿 정보 추가할 것
 
         _update_interval = _config.update_interval
         middle_ware = self.middle_ware
         
-        bsm = middle_ware.ego_bsm
-        cim = middle_ware.cim
+        _bsm = middle_ware.ego_bsm
+        _cim = middle_ware.cim
+        _tablet_bsm = middle_ware.tablet_bsm
         
         sync_time = time()
 
@@ -215,8 +218,9 @@ class ObuSocket(SocketModule):
                 if send_queue:
                     queue_data = send_queue.popleft()
                     _sock.sendto(queue_data.pack_data(), _remote_bind)
-                _sock.sendto(bsm.pack_data(), _remote_bind)
-                _sock.sendto(cim.pack_data(), _remote_bind)
+                _sock.sendto(_bsm.pack_data(), _remote_bind)
+                _sock.sendto(_cim.pack_data(), _remote_bind)
+                tablet_sock.sendto(_tablet_bsm.pack_data(), tablet_bind)
                 # print(f"BSM DATA:: {bsm}")
                 # print(f"CIM DATA:: {cim}")
                     # print(f'{queue_data = }')
@@ -257,13 +261,25 @@ class VehicleSocket(SocketModule):
         self.threading_run = Thread(target=self.process, daemon=True)
         self.threading_run.start()
         
-    def set_dict_data(self, data: _MessageHeader):
+    def set_dict_data(self, data: dict):
         if not isinstance(data, dict):
             raise TypeError
         
         obu2veh_data = ObuToVehicleData()
-        obu2veh_data.msg_type = data.msg_type
+        obu2veh_data.obu_message = data
+        if data.get('dmm') == MessageType.DMM_NOIT:
+            obu2veh_data.msg_type = MessageType.DMM_NOIT
+            obu2veh_data.maneuver_command = ManeuverCommandType.SLOW_DOWN
+        elif data.get('edm') == MessageType.EDM_NOIT:
+            obu2veh_data.msg_type = MessageType.EDM_NOIT
+            obu2veh_data.maneuver_command = ManeuverCommandType.SLOW_DOWN
+        elif data.get('bsm') == MessageType.BSM_NOIT:
+            obu2veh_data.msg_type = MessageType.BSM_NOIT
+            obu2veh_data.maneuver_command = ManeuverCommandType.SLOW_DOWN
         #TODO: 차량으로 보낼 협상 데이터 정의해야 함
+        else:
+            obu2veh_data.msg_type = MessageType.UNKNOWN
+            obu2veh_data.maneuver_command = ManeuverCommandType.NONE
 
         self.send_queue.append(obu2veh_data)
         

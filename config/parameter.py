@@ -42,6 +42,7 @@ class MiddleWareParam:
     update_rate: int = 10
     update_interval = 1/update_rate
     nearby_data_timeout = 3
+    target_bsm_l2id = 0000
 
 class VehicleSpec:
     WIDTH: int = 182  # unit: cm

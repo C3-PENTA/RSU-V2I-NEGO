@@ -2,6 +2,7 @@ from enum import IntEnum, StrEnum
 
 
 class MessageType(IntEnum):
+    UNKNOWN = 0
     BSM_NOIT = 1
     PIM_NOIT = 2
     DMM_NOIT = 3
@@ -54,6 +55,7 @@ class DataFormat(StrEnum):
     BYTE_ORDER = '>'
     HEADER: str = 'HBHH'
     BSM: str = 'BIHiiHBBHHHBhhBhHHHI'
+    MY_BSM: str = 'BIHiiHBBHHHBhhBhHHHI'
     BSM_LIGHT: str = 'BIHiiHBBHHHbHHBHHHHIH'
     CIM:str = 'IB'
     DMM: str = 'IIHB'
@@ -86,6 +88,10 @@ class AgreementFlag(IntEnum):
     
 class BSM:
     msg_type: int = MessageType.BSM_NOIT
+    packet_len: int = 50
+
+class MY_BSM:
+    msg_type: int = MessageType.MY_BSM_NOIT
     packet_len: int = 50
 
 class DMM:

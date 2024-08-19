@@ -1,19 +1,20 @@
 import socket
-from time import time, sleep
 from collections import deque
 from random import choice
 from threading import Thread
+from time import sleep, time
 
 from config.obu_contant import DataFormat
-from config.parameter import RemoteAddress
+from config.parameter import MiddleWareParam, RemoteAddress
 from src.obu.classes import *
-from src.tester.test_data import TEST_DATA, SEND_INTERVAL, SEND_RANDOM, SEND_DNM
+from src.tester.test_data import SEND_DNM, SEND_INTERVAL, SEND_RANDOM, TEST_DATA
 
 
 class ObuTest():
     def __init__(self) -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind(RemoteAddress.OBU_BIND)
+        sock.bind(('localhost', 59450))
+        # sock.bind(RemoteAddress.OBU_BIND)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.settimeout(0.2)
         self.sock = sock
@@ -21,7 +22,11 @@ class ObuTest():
         self.l2id = 1234
         self.is_l2id = False
 
-        self._update_interval = 0.1
+        self.slow_bsm_trigger = False
+        self.dmm_trigger = False
+        self.edm_trigger = False
+        
+        self._update_interval = MiddleWareParam.update_interval
         self.queue = deque([], maxlen=5)
 
     def recv_threading(self):
@@ -55,15 +60,59 @@ class ObuTest():
             ):
                 pass
 
+    def input_command(self):
+        
+        
+        while 1:
+            input_cmd = input(f'BSM:1({self.slow_bsm_trigger}) DMM:3({self.dmm_trigger}) EDM:7({self.edm_trigger}) : ')
+            if not str.isdigit(input_cmd):
+                print(f"input command is not integer. Command type is only int")
+                continue
+            cmd_type = int(input_cmd)
+            
+            if cmd_type == MessageType.BSM_NOIT:
+                if self.slow_bsm_trigger:
+                    self.slow_bsm_trigger = False
+                else:
+                    self.slow_bsm_trigger = True
+            elif cmd_type == MessageType.DMM_NOIT:
+                if self.dmm_trigger:
+                    self.dmm_trigger = False
+                else:
+                    self.dmm_trigger = True
+            elif cmd_type == MessageType.EDM_NOIT:
+                if self.edm_trigger:
+                    self.edm_trigger = False
+                else:
+                    self.edm_trigger = True
+            else:
+                print(f"It's an unknown command type")
+                
+
     def process(self):
         recv_thread = Thread(target=self.recv_threading, daemon=True)
         recv_thread.start()
+        input_thread = Thread(target=self.input_command, daemon=True)
+        input_thread.start()
         # send_thread = Thread(target=self.send_threading, daemon=True, args=(sock, addr, is_l2id))
         # send_thread.start()
         sock = self.sock
         _update_interval = self._update_interval
         count = 0
         sync_time = time()
+        
+        slow_bsm_data = BsmData()
+        slow_bsm_data.transmission_and_speed = 9
+        slow_bsm_data.l2id = MiddleWareParam.target_bsm_l2id
+
+        dmm_data = DmmData()
+        dmm_data.maneuver_type = 1
+        dmm_data.sender = 4321
+        
+        edm_data = EdmData()
+        edm_data.maneuver_type = 2
+        edm_data.sender = 4321
+        
         while 1:
             if self.addr is None or not self.is_l2id:
                 sleep(1)
@@ -74,12 +123,22 @@ class ObuTest():
                 byte_data = self.queue.popleft()
                 sock.sendto(byte_data, self.addr)
                 
-            if not count%10:
-                byte_data = choice(SEND_INTERVAL)
-                sock.sendto(byte_data, self.addr)
-            if not count%20:
-                byte_data = SEND_DNM
-                sock.sendto(byte_data, self.addr)
+            if self.slow_bsm_trigger:
+                sock.sendto(slow_bsm_data.pack_data(), self.addr)
+            
+            if self.dmm_trigger:
+                sock.sendto(dmm_data.pack_data(), self.addr)
+                
+            if self.edm_trigger:
+                sock.sendto(edm_data.pack_data(), self.addr)
+                
+                
+            # if not count%10:
+            #     byte_data = choice(SEND_INTERVAL)
+            #     sock.sendto(byte_data, self.addr)
+            # if not count%20:
+            #     byte_data = SEND_DNM
+            #     sock.sendto(byte_data, self.addr)
             count += 1
 
             dt = time() - sync_time

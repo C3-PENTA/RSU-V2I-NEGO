@@ -15,7 +15,7 @@ from src.obu.classes import (
     VehicleData,
     _MessageHeader,
 )
-from src.obu.middleware import Middleware
+from src.obu.middleware import MiddleWare
 
 # import Middleware
 
@@ -149,7 +149,7 @@ class SocketModule:
             
 
 class ObuSocket(SocketModule):
-    def __init__(self, config: ObuSocketParam, middle_ware: Middleware) -> None:
+    def __init__(self, config: ObuSocketParam, middle_ware: MiddleWare) -> None:
         self.run_recv = False
         self.run_send = False
         self.send_queue = deque([])
@@ -252,7 +252,7 @@ class ObuSocket(SocketModule):
             sleep(1)
             
 class VehicleSocket(SocketModule):
-    def __init__(self, config: VehicleSocketParam, middle_ware: Middleware) -> None:
+    def __init__(self, config: VehicleSocketParam, middle_ware: MiddleWare) -> None:
         self.middle_ware = middle_ware
         self.json_data = defaultdict(lambda: None)
         self.send_queue = deque([])
@@ -261,7 +261,7 @@ class VehicleSocket(SocketModule):
         self.threading_run = Thread(target=self.process, daemon=True)
         self.threading_run.start()
         
-    def set_dict_data(self, data: dict):
+    def set_obu_data(self, data: dict):
         if not isinstance(data, dict):
             raise TypeError
         
@@ -276,7 +276,6 @@ class VehicleSocket(SocketModule):
         elif data.get('bsm') == MessageType.BSM_NOIT:
             obu2veh_data.msg_type = MessageType.BSM_NOIT
             obu2veh_data.maneuver_command = ManeuverCommandType.SLOW_DOWN
-        #TODO: 차량으로 보낼 협상 데이터 정의해야 함
         else:
             obu2veh_data.msg_type = MessageType.UNKNOWN
             obu2veh_data.maneuver_command = ManeuverCommandType.NONE

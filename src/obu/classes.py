@@ -182,7 +182,7 @@ class MyBsmData(BsmData):  # 자율차 -> 태블릿 송신 전용
         self.data_list = self.__match_args__
 
         if data is not None:
-            self.unpack_data(data, self.fmt)  
+            self.unpack_data(data, self.fmt)
             
 @dataclass
 class BsmLightData(BsmData):

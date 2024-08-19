@@ -6,7 +6,7 @@ from src.bridge._socket import ObuSocket, VehicleSocket
 from src.obu.classes import *
 
 
-class Middleware:
+class MiddleWare:
     def __init__(self) -> None:
         self.__init_data()
         self.config = MiddleWareParam
@@ -61,21 +61,19 @@ class Middleware:
             # 차량에 보낼 데이터 정의 필요
             if obu_data.transmission_and_speed<=10 and obu_data.l2id == MiddleWareParam.target_bsm_l2id:
                 obu_dict['bsm'] = self.nearby_bsm.get(obu_data.l2id)
-                self.vehicle_module.set_dict_data(obu_dict)
+                self.vehicle_module.set_obu_data(obu_dict)
                 
         elif msg_type == MessageType.DMM_NOIT:
-            # 차량에 보낼 데이터 정의 필요
             print(f"Receive DMM_NOIT from OBU: {obu_data}")
             obu_dict['bsm'] = self.nearby_bsm.get(obu_data.sender)
             obu_dict['dmm'] = obu_data
-            self.vehicle_module.set_dict_data(obu_dict)
+            self.vehicle_module.set_obu_data(obu_dict)
             self.nearby_rsu_data[MessageType.DMM_NOIT] = obu_data
         elif msg_type == MessageType.EDM_NOIT:
-            # 차량에 보낼 데이터 정의 필요
             print(f"Receive EDM_NOIT from OBU: {obu_data}")
             obu_dict['bsm'] = self.nearby_bsm.get(obu_data.sender)
             obu_dict['edm'] = obu_data
-            self.vehicle_module.set_dict_data(obu_dict)
+            self.vehicle_module.set_obu_data(obu_dict)
             self.nearby_rsu_data[MessageType.EDM_NOIT] = obu_data
         elif msg_type == MessageType.DNM_REQUEST:
             print(f"Receive DNM_REQ_NOIT from OBU: {obu_data}")
@@ -93,10 +91,10 @@ class Middleware:
         self.update_data()
 
     def update_data(self):
-        vehicle_data = self.vehicle_data
         vehicle_module = self.vehicle_module
         if not vehicle_module.is_connected:
             return False
+        vehicle_data = self.vehicle_data
         
         # vehicle_data.update_data(vehicle_module.get_data())
         self.ego_bsm.__dict__.update(vehicle_data.to_dict())
@@ -150,9 +148,9 @@ class Middleware:
             sync_time = time()
             
 def run_middleware():
-    mw = Middleware()
+    mw = MiddleWare()
     mw.process()
             
 if __name__ == '__main__':
-    mw = Middleware()
+    mw = MiddleWare()
     mw.process()

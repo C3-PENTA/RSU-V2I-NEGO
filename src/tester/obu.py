@@ -13,8 +13,8 @@ from src.tester.test_data import SEND_DNM, SEND_INTERVAL, SEND_RANDOM, TEST_DATA
 class ObuTest():
     def __init__(self) -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind(('localhost', 59450))
-        # sock.bind(RemoteAddress.OBU_BIND)
+        # sock.bind(('localhost', 59450))
+        sock.bind(RemoteAddress.OBU_BIND)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.settimeout(0.2)
         self.sock = sock
@@ -33,13 +33,17 @@ class ObuTest():
         sock = self.sock
         bsm = BsmData()
         l2id = self.l2id
+        l2id_rep = L2idResponseData()
+        l2id_rep.l2id = l2id
         while 1:
             try:
                 recv_raw, _addr = sock.recvfrom(1024)
+                # print(f"{recv_raw = }")
                 self.addr = _addr
                 msg_type = bsm.unpack_header(recv_raw)                    
                 if msg_type == 101:
-                    self.queue.append(L2idResponseData(l2id).pack_data(DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.L2ID_RESPONSE))
+                    self.queue.append(l2id_rep.pack_data(DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.L2ID_RESPONSE))
+                    print(f"{l2id_rep = }")
                     self.is_l2id = True
                     # print(f"{msg_type = }")
                 elif msg_type == 5:
@@ -48,8 +52,8 @@ class ObuTest():
                 #     print(f"{recv_raw = }")
                 obu_data = MSG_TYPE[msg_type](l2id=l2id)
                 obu_data.unpack_data(recv_raw)
-                if msg_type != 8 and msg_type != 9:
-                    print(f"{obu_data = }")
+                # if msg_type != 8 and msg_type != 9:
+                #     print(f"{obu_data = }")
             except TimeoutError:
                 pass
             except (
@@ -61,7 +65,7 @@ class ObuTest():
                 pass
 
     def input_command(self):
-        
+        # TODO: Input을 넣어도 상위에서 반응이 없음
         
         while 1:
             input_cmd = input(f'BSM:1({self.slow_bsm_trigger}) DMM:3({self.dmm_trigger}) EDM:7({self.edm_trigger}) : ')
@@ -123,8 +127,8 @@ class ObuTest():
                 byte_data = self.queue.popleft()
                 sock.sendto(byte_data, self.addr)
                 
-            if self.slow_bsm_trigger:
-                sock.sendto(slow_bsm_data.pack_data(), self.addr)
+            # if self.slow_bsm_trigger:
+            #     sock.sendto(slow_bsm_data.pack_data(), self.addr)
             
             if self.dmm_trigger:
                 sock.sendto(dmm_data.pack_data(), self.addr)

@@ -3,17 +3,18 @@
 
 class RemoteAddress:
     VEHICLE_BIND = ('localhost', 20000)
-    # OBU_BIND = ('',63113)
+    # TABLET_BIND = ('192.168.11.100', 63113)
+    # OBU_BIND = ("192.168.11.204", 63112)
     #tester
-    # OBU_BIND = ('localhost',63113)
-    OBU_BIND = ("192.168.20.150", 63113)
+    OBU_BIND = ('localhost',63112)
+    TABLET_BIND = ('localhost', 50000)
 
 
 class HostAddress:
     VEHICLE_BIND = ('localhost', 28000)
-    # OBU_BIND = ('',50002)
+    # OBU_BIND = ('192.168.11.200',63112)
     #tester
-    OBU_BIND = ('192.168.20.2',50004)
+    OBU_BIND = ('localhost',50004)
 
 
 class CommunicatorConfig:
@@ -31,6 +32,7 @@ class ObuSocketParam(CommunicatorConfig):
     name = 'OBU'
     remote_bind = RemoteAddress.OBU_BIND
     host_bind = HostAddress.OBU_BIND
+    tablet_bind = RemoteAddress.TABLET_BIND
     
 
 class VehicleSocketParam(CommunicatorConfig):

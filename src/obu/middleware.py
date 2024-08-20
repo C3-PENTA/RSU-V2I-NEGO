@@ -39,7 +39,7 @@ class MiddleWare:
     def delete_time_error_data(self, data):
         if type(data) == dict:
             current_timestamp = time()
-            for vehicle_l2id, vehicle_data in data.items():
+            for vehicle_l2id, vehicle_data in data.copy().items():
                 vehicle_data: BsmData
                 if current_timestamp - vehicle_data.timestamp > MiddleWareParam.nearby_data_timeout:
                     data.pop(vehicle_l2id)
@@ -56,23 +56,23 @@ class MiddleWare:
             self.tablet_bsm.l2id = self.ego_l2id
             self.cim.sender = self.ego_l2id
             self.nearby_rsu_data[MessageType.L2ID_RESPONSE] = obu_data
-        elif msg_type == MessageType.BSM_NOIT or MessageType.BSM_LIGHT_NOIT:
+        elif msg_type == MessageType.BSM_NOIT:
             self.nearby_bsm[obu_data.l2id] = obu_data
             # 차량에 보낼 데이터 정의 필요
             if obu_data.transmission_and_speed<=10 and obu_data.l2id == MiddleWareParam.target_bsm_l2id:
-                obu_dict['bsm'] = self.nearby_bsm.get(obu_data.l2id)
+                obu_dict["bsm"] = self.nearby_bsm.get(obu_data.l2id)
                 self.vehicle_module.set_obu_data(obu_dict)
                 
         elif msg_type == MessageType.DMM_NOIT:
             print(f"Receive DMM_NOIT from OBU: {obu_data}")
-            obu_dict['bsm'] = self.nearby_bsm.get(obu_data.sender)
-            obu_dict['dmm'] = obu_data
+            obu_dict["bsm"] = self.nearby_bsm.get(obu_data.sender)
+            obu_dict["dmm"] = obu_data
             self.vehicle_module.set_obu_data(obu_dict)
             self.nearby_rsu_data[MessageType.DMM_NOIT] = obu_data
         elif msg_type == MessageType.EDM_NOIT:
             print(f"Receive EDM_NOIT from OBU: {obu_data}")
-            obu_dict['bsm'] = self.nearby_bsm.get(obu_data.sender)
-            obu_dict['edm'] = obu_data
+            obu_dict["bsm"] = self.nearby_bsm.get(obu_data.sender)
+            obu_dict["edm"] = obu_data
             self.vehicle_module.set_obu_data(obu_dict)
             self.nearby_rsu_data[MessageType.EDM_NOIT] = obu_data
         elif msg_type == MessageType.DNM_REQUEST:

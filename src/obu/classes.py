@@ -319,10 +319,11 @@ class L2idRequestData(_MessageHeader):  # 자율차 -> OBU 송신 전용
 class L2idResponseData(_MessageHeader):
     msg_type = L2ID_RESPONSE.msg_type
     l2id: int = 0  # 4bytes uint
-    def __init__(self, data: bytes, **kward):
+    def __init__(self, data: bytes = None, **kward):
         super().__post_init__()
         self.fmt = DataFormat.BYTE_ORDER+DataFormat.HEADER+DataFormat.L2ID_RESPONSE
-        self.unpack_data(data)
+        if data is not None:
+            self.unpack_data(data)
 
 
 @dataclass
@@ -344,8 +345,8 @@ class CimData(_MessageHeader):
 @dataclass
 class ObuToVehicleData:
     timestamp: float = time()
-    msg_type: MessageType = 0
-    maneuver_command: ManeuverCommandType = ManeuverCommandType.NONE
+    msg_type: int = 0
+    maneuver_command: int = 0
     obu_message: dict = field(default_factory=dict)
     
     

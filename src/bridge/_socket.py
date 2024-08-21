@@ -4,6 +4,14 @@ from collections import defaultdict, deque
 from threading import Thread
 from time import sleep, time
 
+from config.loggers import (
+    backup_recv_raw_log,
+    backup_send_log,
+    backup_send_raw_log,
+    error_log,
+    sys_log,
+)
+
 # from src.obu.middleware import Middleware
 from config.obu_contant import ManeuverCommandType, MessageType
 from config.parameter import CommunicatorConfig, ObuSocketParam, VehicleSocketParam
@@ -65,16 +73,19 @@ class SocketModule:
                 print(f"{self.__class__.__name__} remote bind: {remote_bind}")
             
         try:
+            sys_log.info(f"Connecting {remote_bind}...")
             sock.connect(remote_bind)
         except socket.timeout:
             print(f'connect time out')
             return False
         except Exception as err:
             sock.close()
-            print(f'{err = }')
+            sys_log.error(f"Raise connection error: {err}")
+            error_log.error(f"Raise connection error: {err}")
             self.is_connected = False
             return False
 
+        sys_log.info(f"Connected {self.__class__.__name__} socket.")
         return True
 
     def dump_json(self, data=None):
@@ -98,10 +109,6 @@ class SocketModule:
             return None
 
         return self.recv_data
-    
-    def update_status(self, count):
-        pass
-    
     
     def process(self):
         _config = self.config
@@ -163,7 +170,6 @@ class ObuSocket(SocketModule):
         self.thread_process = Thread(target=self.process, daemon=True)
         self.thread_process.start()
 
-
     def put_queue_data(self, data):
         self.send_queue.append(data)
     
@@ -177,6 +183,7 @@ class ObuSocket(SocketModule):
         while self.run_recv:            
             try:
                 raw_data, server_addr = _sock.recvfrom(_buffer)
+                backup_recv_raw_log.info(f"{raw_data.hex()}")
                 recv_time = time()
                 set_data(raw_data)
             
@@ -188,7 +195,8 @@ class ObuSocket(SocketModule):
                 ConnectionRefusedError,
                 ConnectionResetError,
             ) as err:
-                pass
+                sys_log.error(f"Disconnected: {self.__class__.__name__}({self.remote_bind}).")
+
             
     def send_obu_data(self):
         _config = self.config
@@ -220,7 +228,13 @@ class ObuSocket(SocketModule):
                 continue
             if send_queue:
                 queue_data = send_queue.popleft()
-                _sock.sendto(queue_data.pack_data(), _remote_bind)
+                pack_data = queue_data.pack_data()
+                _sock.sendto(pack_data, _remote_bind)
+                log_msg = ''
+                for key, val in queue_data.to_dict():
+                    log_msg += f"{key}={val}"
+                backup_send_log.info(f"{log_msg}")
+                backup_send_raw_log.info(f"{pack_data.hex()}")
             _sock.sendto(_bsm.pack_data(), _remote_bind)
             _sock.sendto(_cim.pack_data(), _remote_bind)
             tablet_sock.sendto(_tablet_bsm.pack_data(), tablet_bind)
@@ -241,6 +255,7 @@ class ObuSocket(SocketModule):
         self.threading_recv = Thread()
         self.threading_send = Thread()
         # self.run_recv = False
+        sys_log.info(f"Run {self.__class__.__name__} modules process")
         while 1:
             if not self.run_recv and not self.threading_recv.is_alive():
                 self.threading_recv = Thread(target=self.recv_obu_data)
@@ -296,6 +311,7 @@ class VehicleSocket(SocketModule):
         
         sync_time = time()
         _middle_ware = self.middle_ware
+        sys_log.info(f"Run {self.__class__.__name__} modules process")
         while 1:
             if not self.is_connected:
                 _sock = self.create_socket()
@@ -332,6 +348,7 @@ class VehicleSocket(SocketModule):
                 ConnectionRefusedError,
                 ConnectionResetError,
             ) as err:
+                sys_log.error(f"Disconnected: {self.__class__.__name__}({self.remote_bind}).")
                 _sock.close()
                 self.is_connected = False
                 

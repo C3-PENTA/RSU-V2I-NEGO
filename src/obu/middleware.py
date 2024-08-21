@@ -1,6 +1,8 @@
+import sys
 from collections import deque
 from time import sleep, time
 
+from config.loggers import backup_recv_log, sys_log
 from config.parameter import MiddleWareParam, ObuSocketParam, VehicleSocketParam
 from src.bridge._socket import ObuSocket, VehicleSocket
 from src.obu.classes import *
@@ -48,6 +50,10 @@ class MiddleWare:
         # msg_type = self.ego_bsm.unpack_header(data)
         msg_type = self.unpack_msg_type(data)
         obu_data = MSG_TYPE[msg_type](data = data)
+        log_msg = ''
+        for key, val in data:
+            log_msg += f"{key}={val},"
+        backup_recv_log.info(f"{log_msg}")
         obu_dict = {}
         # obu_data.unpack_data(data)
         if msg_type == MessageType.L2ID_RESPONSE:
@@ -86,7 +92,6 @@ class MiddleWare:
     def set_vehicle_data(self, data: dict):
         if not isinstance(data, dict):
             raise TypeError
-        
         self.vehicle_data.update_data(data)
         self.update_data()
 
@@ -127,6 +132,7 @@ class MiddleWare:
         _delete_time_error_data = self.delete_time_error_data
 
         sync_time = time()
+        sys_log.info(f"Run {self.__class__.__name__} Process.")
         while 1:
             if not check_state():
                 sleep(3)

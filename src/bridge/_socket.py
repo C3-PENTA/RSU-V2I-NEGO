@@ -1,6 +1,7 @@
 import json
 import socket
 from collections import defaultdict, deque
+import sys
 from threading import Thread
 from time import sleep, time
 
@@ -46,7 +47,7 @@ class SocketModule:
     def create_socket(self, bind = None, protocol = None):
         if protocol == 'udp':
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(self.config.update_interval*5)
+            # sock.settimeout(self.config.update_interval*5)
         else:
             sock = socket.socket()
             sock.settimeout(self.config.update_interval*10)
@@ -61,6 +62,7 @@ class SocketModule:
     
     
     def connect_remote(self, sock = None, remote_bind = None):
+        func_name = f'{self.__class__.__name__}::{sys._getframe().f_code.co_name}'
         if sock is None:
             if self.sock is not None:
                 sock = self.sock
@@ -73,19 +75,19 @@ class SocketModule:
                 print(f"{self.__class__.__name__} remote bind: {remote_bind}")
             
         try:
-            sys_log.info(f"Connecting {remote_bind}...")
+            sys_log.info(f"{func_name},Connecting {remote_bind}...")
             sock.connect(remote_bind)
         except socket.timeout:
             print(f'connect time out')
             return False
         except Exception as err:
             sock.close()
-            sys_log.error(f"Raise connection error: {err}")
-            error_log.error(f"Raise connection error: {err}")
+            # sys_log.error(f"{func_name},Raise connection error: {err}")
+            error_log.error(f"{func_name},Raise connection error: {err}")
             self.is_connected = False
             return False
 
-        sys_log.info(f"Connected {self.__class__.__name__} socket.")
+        sys_log.info(f"{func_name},Connected {self.__class__.__name__} socket.")
         return True
 
     def dump_json(self, data=None):
@@ -174,6 +176,7 @@ class ObuSocket(SocketModule):
         self.send_queue.append(data)
     
     def recv_obu_data(self):
+        func_name = f'{self.__class__.__name__}::{sys._getframe().f_code.co_name}'
         _sock = self.sock
         _config = self.config
         _buffer = _config.buffer
@@ -195,7 +198,8 @@ class ObuSocket(SocketModule):
                 ConnectionRefusedError,
                 ConnectionResetError,
             ) as err:
-                sys_log.error(f"Disconnected: {self.__class__.__name__}({self.remote_bind}).")
+                # sys_log.error(f"{func_name},Disconnected: {self.__class__.__name__}({self.remote_bind}).")
+                error_log.error(f"{func_name},Disconnected: {self.__class__.__name__}({self.remote_bind}).")
 
             
     def send_obu_data(self):
@@ -231,7 +235,7 @@ class ObuSocket(SocketModule):
                 pack_data = queue_data.pack_data()
                 _sock.sendto(pack_data, _remote_bind)
                 log_msg = ''
-                for key, val in queue_data.to_dict():
+                for key, val in queue_data.to_dict().items():
                     log_msg += f"{key}={val}"
                 backup_send_log.info(f"{log_msg}")
                 backup_send_raw_log.info(f"{pack_data.hex()}")
@@ -302,6 +306,7 @@ class VehicleSocket(SocketModule):
         
     
     def process(self):
+        func_name = f'{self.__class__.__name__}::{sys._getframe().f_code.co_name}'
         
         _dump_data = self.dump_json
         _load_json = self.load_json
@@ -312,9 +317,11 @@ class VehicleSocket(SocketModule):
         sync_time = time()
         _middle_ware = self.middle_ware
         sys_log.info(f"Run {self.__class__.__name__} modules process")
+        _sock = None
         while 1:
-            if not self.is_connected:
+            if _sock is None:
                 _sock = self.create_socket()
+            if not self.is_connected:
                 if self.connect_remote(_sock):
                     self.is_connected = True
                     sync_time = time()
@@ -348,8 +355,10 @@ class VehicleSocket(SocketModule):
                 ConnectionRefusedError,
                 ConnectionResetError,
             ) as err:
-                sys_log.error(f"Disconnected: {self.__class__.__name__}({self.remote_bind}).")
+                # sys_log.error(f"{func_name},Disconnected: {self.__class__.__name__}({self.remote_bind}).")
+                error_log.error(f"{func_name},Disconnected: {self.__class__.__name__}({self.remote_bind}).")
                 _sock.close()
+                _sock = None
                 self.is_connected = False
                 
                 

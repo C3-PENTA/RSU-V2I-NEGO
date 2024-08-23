@@ -51,7 +51,7 @@ class MiddleWare:
         msg_type = self.unpack_msg_type(data)
         obu_data = MSG_TYPE[msg_type](data = data)
         log_msg = ''
-        for key, val in data:
+        for key, val in obu_data.to_dict().items():
             log_msg += f"{key}={val},"
         backup_recv_log.info(f"{log_msg}")
         obu_dict = {}

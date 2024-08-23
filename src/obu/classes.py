@@ -141,7 +141,7 @@ class BsmData(_MessageHeader):
 
         if data is not None:
             self.unpack_data(data, self.fmt)
-    
+
 
     def pack_data(self, data_fmt = None):
         if data_fmt is None:

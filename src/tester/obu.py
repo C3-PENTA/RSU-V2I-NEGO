@@ -5,7 +5,7 @@ from threading import Thread
 from time import sleep, time
 
 from config.obu_contant import DataFormat
-from config.parameter import MiddleWareParam, RemoteAddress
+from config.parameter import MiddleWareParam, ObuSocketParam, RemoteAddress
 from src.obu.classes import *
 from src.tester.test_data import SEND_DNM, SEND_INTERVAL, SEND_RANDOM, TEST_DATA
 
@@ -101,17 +101,21 @@ class ObuTest():
         # send_thread = Thread(target=self.send_threading, daemon=True, args=(sock, addr, is_l2id))
         # send_thread.start()
         sock = self.sock
+        tablet_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        tablet_sock.bind(('localhost',63114))
+        tablet_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        tablet_addr = ObuSocketParam.tablet_bind
         _update_interval = self._update_interval
         count = 0
         sync_time = time()
         
+        dmm_data.sender = 4321
         slow_bsm_data = BsmData()
         slow_bsm_data.transmission_and_speed = 9
         slow_bsm_data.l2id = MiddleWareParam.target_bsm_l2id
 
         dmm_data = DmmData()
         dmm_data.maneuver_type = 1
-        dmm_data.sender = 4321
         
         edm_data = EdmData()
         edm_data.maneuver_type = 2
@@ -123,6 +127,7 @@ class ObuTest():
                 continue
             byte_data = choice(SEND_RANDOM)
             sock.sendto(byte_data, self.addr)
+            tablet_sock.sendto(byte_data, tablet_addr)
             if self.queue:
                 byte_data = self.queue.popleft()
                 sock.sendto(byte_data, self.addr)

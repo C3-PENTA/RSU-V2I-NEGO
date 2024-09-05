@@ -4,10 +4,10 @@ from random import choice
 from threading import Thread
 from time import sleep, time
 
-from config.obu_contant import DataFormat
+from config.obu_contant import DataFormat, MessageType
 from config.parameter import MiddleWareParam, ObuSocketParam, RemoteAddress
-from src.obu.classes import *
-from src.tester.test_data import SEND_DNM, SEND_INTERVAL, SEND_RANDOM, TEST_DATA
+from src.obu.classes import MSG_TYPE, BsmData, DmmData, EdmData, L2idResponseData
+from src.tester.test_data import SEND_RANDOM, TEST_DATA
 
 
 class ObuTest():
@@ -119,6 +119,7 @@ class ObuTest():
 
         dmm_data.maneuver_type = 1
         
+        
         edm_data = EdmData()
         edm_data.maneuver_type = 2
         edm_data.sender = 4321
@@ -137,7 +138,6 @@ class ObuTest():
                 
             if self.slow_bsm_trigger:
                 sock.sendto(slow_bsm_data.pack_data(), self.addr)
-                # print(f"{slow_bsm_data = }")
             
             if self.dmm_trigger:
                 sock.sendto(dmm_data.pack_data(), self.addr)

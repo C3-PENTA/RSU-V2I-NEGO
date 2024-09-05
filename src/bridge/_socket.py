@@ -56,7 +56,7 @@ class SocketModule:
             bind = self.host_bind
             print(f"{self.__class__.__name__} host bind: {self.host_bind}")
         sock.bind(bind)
-
+        sys_log.info(f"MY BIND IP: {bind}")
         # self.sock = sock
         return sock 
     
@@ -81,10 +81,11 @@ class SocketModule:
             print(f'connect time out')
             return False
         except Exception as err:
+            self.is_connected = False
             sock.close()
+            sock = None
             # sys_log.error(f"{func_name},Raise connection error: {err}")
             error_log.error(f"{func_name},Raise connection error: {err}")
-            self.is_connected = False
             return False
 
         sys_log.info(f"{func_name},Connected {self.__class__.__name__} socket.")
@@ -183,7 +184,7 @@ class ObuSocket(SocketModule):
         middle_ware = self.middle_ware
         set_data = middle_ware.set_obu_data
 
-        while self.run_recv:            
+        while self.run_recv:
             try:
                 raw_data, server_addr = _sock.recvfrom(_buffer)
                 backup_recv_raw_log.info(f"{raw_data.hex()}")
@@ -204,10 +205,11 @@ class ObuSocket(SocketModule):
             
     def send_obu_data(self):
         _config = self.config
-        _sock = self.sock
+        # _sock = self.sock
+        _sock = self.create_socket(self.config.send_host_bind,'udp')
         _remote_bind = self.remote_bind
         
-        tablet_sock = self.create_socket(_config.host_bind,'udp')
+        tablet_sock = self.create_socket(self.config.tablet_bind,'udp')
         tablet_bind = _config.tablet_bind  # ETRI 태블릿 정보 추가할 것
 
         _update_interval = _config.update_interval
@@ -225,8 +227,14 @@ class ObuSocket(SocketModule):
             if not middle_ware.ego_l2id:
                 if send_queue:
                     queue_data = send_queue.popleft()
+                    pack_data = queue_data.pack_data()
                     # print(f"{queue_data = }")
-                    _sock.sendto(queue_data.pack_data(), _remote_bind)
+                    _sock.sendto(pack_data, _remote_bind)
+                    log_msg = ''
+                    for key, val in queue_data.to_dict().items():
+                        log_msg += f",{key}={val}"
+                    backup_send_log.info(f"{log_msg}")
+                    backup_send_raw_log.info(f"{pack_data.hex()}")
                     # print(f"Request L2ID: {queue_data}")
                 sleep(_update_interval)
                 continue
@@ -236,7 +244,7 @@ class ObuSocket(SocketModule):
                 _sock.sendto(pack_data, _remote_bind)
                 log_msg = ''
                 for key, val in queue_data.to_dict().items():
-                    log_msg += f"{key}={val}"
+                    log_msg += f",{key}={val}"
                 backup_send_log.info(f"{log_msg}")
                 backup_send_raw_log.info(f"{pack_data.hex()}")
             _sock.sendto(_bsm.pack_data(), _remote_bind)
@@ -315,26 +323,30 @@ class VehicleSocket(SocketModule):
         _interval = self.config.update_interval
         
         sync_time = time()
+        latest_data_time = time()
         _middle_ware = self.middle_ware
         sys_log.info(f"Run {self.__class__.__name__} modules process")
         _sock = None
         while 1:
             if _sock is None:
-                _sock = self.create_socket()
+                _sock = self.create_socket(bind=self.config.host_bind)
             if not self.is_connected:
                 if self.connect_remote(_sock):
                     self.is_connected = True
                     sync_time = time()
                 else:
                     self.is_connected = False
+                    _sock = None
                     sleep(2)
                 continue
 
             try:
                 if _send_queue:
                     obu2veh_data = _send_queue.popleft()
+                    latest_data_time = time()
                 else:
-                    obu2veh_data = ObuToVehicleData()
+                    if time() - latest_data_time>0.2:
+                        obu2veh_data = ObuToVehicleData()
                 _sock.send(_dump_data(obu2veh_data.to_dict()).encode())
                 
                 raw_vehicle = _sock.recv(_buffer).decode()

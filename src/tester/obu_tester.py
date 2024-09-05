@@ -14,7 +14,8 @@ class ObuTest():
     def __init__(self) -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # sock.bind(('localhost', 59450))
-        sock.bind(RemoteAddress.OBU_BIND)
+        sock.bind(('192.168.11.200', 59450))
+        # sock.bind(RemoteAddress.OBU_BIND)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.settimeout(0.2)
         self.sock = sock
@@ -95,51 +96,56 @@ class ObuTest():
 
     def process(self):
         recv_thread = Thread(target=self.recv_threading, daemon=True)
-        recv_thread.start()
+        # recv_thread.start()
         input_thread = Thread(target=self.input_command, daemon=True)
         input_thread.start()
         # send_thread = Thread(target=self.send_threading, daemon=True, args=(sock, addr, is_l2id))
         # send_thread.start()
         sock = self.sock
         tablet_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        tablet_sock.bind(('localhost',63114))
+        # tablet_sock.bind(('localhost',63114))
+        tablet_sock.bind(('192.168.11.200',63115))
         tablet_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         tablet_addr = ObuSocketParam.tablet_bind
         _update_interval = self._update_interval
         count = 0
         sync_time = time()
         
+        dmm_data = DmmData()
         dmm_data.sender = 4321
         slow_bsm_data = BsmData()
         slow_bsm_data.transmission_and_speed = 9
         slow_bsm_data.l2id = MiddleWareParam.target_bsm_l2id
 
-        dmm_data = DmmData()
         dmm_data.maneuver_type = 1
         
         edm_data = EdmData()
         edm_data.maneuver_type = 2
         edm_data.sender = 4321
-        
+        self.addr = ('192.168.11.200', 63112)
+        self.is_l2id = True
         while 1:
             if self.addr is None or not self.is_l2id:
                 sleep(1)
                 continue
-            byte_data = choice(SEND_RANDOM)
-            sock.sendto(byte_data, self.addr)
-            tablet_sock.sendto(byte_data, tablet_addr)
+            # byte_data = choice(SEND_RANDOM)
+            # sock.sendto(byte_data, self.addr)
+            # tablet_sock.sendto(byte_data, tablet_addr)
             if self.queue:
                 byte_data = self.queue.popleft()
                 sock.sendto(byte_data, self.addr)
                 
-            # if self.slow_bsm_trigger:
-            #     sock.sendto(slow_bsm_data.pack_data(), self.addr)
+            if self.slow_bsm_trigger:
+                sock.sendto(slow_bsm_data.pack_data(), self.addr)
+                # print(f"{slow_bsm_data = }")
             
             if self.dmm_trigger:
                 sock.sendto(dmm_data.pack_data(), self.addr)
+                # print(f"{dmm_data = }")
                 
             if self.edm_trigger:
                 sock.sendto(edm_data.pack_data(), self.addr)
+                # print(f"{edm_data = }")
                 
                 
             # if not count%10:

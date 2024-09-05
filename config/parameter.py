@@ -13,6 +13,8 @@ class RemoteAddress:
 class HostAddress:
     VEHICLE_BIND = ('localhost', 28000)
     OBU_BIND = ('192.168.11.200',63112)
+    OBU_SEND_BIND = ('192.168.11.200',63112)
+    TABLET_BIND = ('192.168.11.200',63114)
     #tester
     # OBU_BIND = ('localhost',50004)
 
@@ -32,7 +34,9 @@ class ObuSocketParam(CommunicatorConfig):
     name = 'OBU'
     remote_bind = RemoteAddress.OBU_BIND
     host_bind = HostAddress.OBU_BIND
-    tablet_bind = RemoteAddress.TABLET_BIND
+    send_host_bind = HostAddress.OBU_SEND_BIND
+    tablet_bind = HostAddress.TABLET_BIND
+    remote_tablet_bind = RemoteAddress.TABLET_BIND
 
 
 class VehicleSocketParam(CommunicatorConfig):
@@ -54,11 +58,11 @@ class VehicleSpec:
     
     
 class LoggerParam:
-    backup: bool = False
-    backup_recv_raw: bool = False
-    backup_send_raw: bool = False
-    backup_recv_data: bool = False
-    backup_send_data: bool = False
+    backup: bool = True
+    backup_recv_raw: bool = True
+    backup_send_raw: bool = True
+    backup_recv_data: bool = True
+    backup_send_data: bool = True
 
 
 if __name__ == '__main__':

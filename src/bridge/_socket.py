@@ -102,7 +102,10 @@ class SocketModule:
         return dump_data
 
     def load_json(self, data):
-        load_data = json.loads(data)
+        try:
+            load_data = json.loads(data)
+        except:
+            load_data = {}
         # print(f"{load_data = }")
         return load_data
     
@@ -206,11 +209,11 @@ class ObuSocket(SocketModule):
     def send_obu_data(self):
         _config = self.config
         # _sock = self.sock
-        _sock = self.create_socket(self.config.send_host_bind,'udp')
+        _sock = self.create_socket(_config.send_host_bind,'udp')
         _remote_bind = self.remote_bind
         
-        tablet_sock = self.create_socket(self.config.tablet_bind,'udp')
-        tablet_bind = _config.tablet_bind  # ETRI 태블릿 정보 추가할 것
+        tablet_sock = self.create_socket(_config.tablet_bind,'udp')
+        tablet_bind = _config.remote_tablet_bind  # ETRI 태블릿 정보 추가할 것
 
         _update_interval = _config.update_interval
         middle_ware = self.middle_ware
@@ -310,6 +313,7 @@ class VehicleSocket(SocketModule):
             obu2veh_data.msg_type = MessageType.UNKNOWN
             obu2veh_data.maneuver_command = ManeuverCommandType.NONE
 
+        obu2veh_data.timestamp = time()
         self.send_queue.append(obu2veh_data)
         
     
@@ -326,6 +330,7 @@ class VehicleSocket(SocketModule):
         latest_data_time = time()
         _middle_ware = self.middle_ware
         sys_log.info(f"Run {self.__class__.__name__} modules process")
+        obu2veh_data = ObuToVehicleData()
         _sock = None
         while 1:
             if _sock is None:
@@ -345,10 +350,10 @@ class VehicleSocket(SocketModule):
                     obu2veh_data = _send_queue.popleft()
                     latest_data_time = time()
                 else:
-                    if time() - latest_data_time>0.2:
+                    if time() - latest_data_time > 1:
                         obu2veh_data = ObuToVehicleData()
+                        obu2veh_data.timestamp = time()
                 _sock.send(_dump_data(obu2veh_data.to_dict()).encode())
-                
                 raw_vehicle = _sock.recv(_buffer).decode()
                 # print(f"{raw_vehicle = }")
                 # vehicle_data = VehicleData()
@@ -378,3 +383,4 @@ class VehicleSocket(SocketModule):
             if dt < _interval:
                 sleep(_interval-dt)
             sync_time = time()
+            # sleep(0)

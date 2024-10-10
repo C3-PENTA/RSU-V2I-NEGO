@@ -24,13 +24,13 @@ class _MessageHeader:  # for send
         self.data_list = self.__match_args__
         self.header_list = _MessageHeader.__match_args__
         self.timestamp: float = time()
-        self.scaling_list = {'lat':1/10**7,
-                     'lon':1/10**7,
+        self.scaling_list = {'lat':1/10**8,
+                     'lon':1/10**8,
                      'hgt':0.1,
                      'transmission_and_speed':0.02,
                      'heading':0.0125,
-                     'width':0.1,
-                     'length':0.1,
+                     'width':1,
+                     'length':1,
         }
     
     @classmethod
@@ -154,6 +154,7 @@ class BsmData(_MessageHeader):
             value = self.__getattribute__(key)
             if key in self.scaling_list:
                 value = int(value / self.scaling_list[key])
+            # _data_list.append(0)
             _data_list.append(value)
         self.msg_count += 1
         if self.msg_count > 128:

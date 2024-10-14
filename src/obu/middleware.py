@@ -49,45 +49,48 @@ class MiddleWare:
     def set_obu_data(self, data: bytes):
         # msg_type = self.ego_bsm.unpack_header(data)
         msg_type = self.unpack_msg_type(data)
-        obu_data = MSG_TYPE[msg_type](data = data)
-        log_msg = ''
-        for key, val in obu_data.to_dict().items():
-            log_msg += f"{key}={val},"
-        backup_recv_log.info(f"{log_msg}")
-        obu_dict = {}
-        # obu_data.unpack_data(data)
-        if msg_type == MessageType.L2ID_RESPONSE:
-            self.ego_l2id = obu_data.l2id
-            self.ego_bsm.l2id = self.ego_l2id
-            self.tablet_bsm.l2id = self.ego_l2id
-            self.cim.sender = self.ego_l2id
-            self.nearby_rsu_data[MessageType.L2ID_RESPONSE] = obu_data
-        elif msg_type == MessageType.BSM_NOIT:
-            self.nearby_bsm[obu_data.l2id] = obu_data
-            # 차량에 보낼 데이터 정의 필요
-            if obu_data.transmission_and_speed<=10 and obu_data.l2id == MiddleWareParam.target_bsm_l2id:
-                obu_dict["bsm"] = self.nearby_bsm.get(obu_data.l2id)
+        try:
+            obu_data = MSG_TYPE[msg_type](data = data)
+            log_msg = ''
+            for key, val in obu_data.to_dict().items():
+                log_msg += f"{key}={val},"
+            backup_recv_log.info(f"{log_msg}")
+            obu_dict = {}
+            # obu_data.unpack_data(data)
+            if msg_type == MessageType.L2ID_RESPONSE:
+                self.ego_l2id = obu_data.l2id
+                self.ego_bsm.l2id = self.ego_l2id
+                self.tablet_bsm.l2id = self.ego_l2id
+                self.cim.sender = self.ego_l2id
+                self.nearby_rsu_data[MessageType.L2ID_RESPONSE] = obu_data
+            elif msg_type == MessageType.BSM_NOIT:
+                self.nearby_bsm[obu_data.l2id] = obu_data
+                # 차량에 보낼 데이터 정의 필요
+                if obu_data.transmission_and_speed<=1146.88 and obu_data.l2id == MiddleWareParam.target_bsm_l2id:
+                    obu_dict["bsm"] = self.nearby_bsm.get(obu_data.l2id)
+                    self.vehicle_module.set_obu_data(obu_dict)
+                    
+            elif msg_type == MessageType.DMM_NOIT:
+                print(f"Receive DMM_NOIT from OBU: {obu_data}")
+                obu_dict["bsm"] = self.nearby_bsm.get(obu_data.sender)
+                obu_dict["dmm"] = obu_data
                 self.vehicle_module.set_obu_data(obu_dict)
-                
-        elif msg_type == MessageType.DMM_NOIT:
-            print(f"Receive DMM_NOIT from OBU: {obu_data}")
-            obu_dict["bsm"] = self.nearby_bsm.get(obu_data.sender)
-            obu_dict["dmm"] = obu_data
-            self.vehicle_module.set_obu_data(obu_dict)
-            self.nearby_rsu_data[MessageType.DMM_NOIT] = obu_data
-        elif msg_type == MessageType.EDM_NOIT:
-            print(f"Receive EDM_NOIT from OBU: {obu_data}")
-            obu_dict["bsm"] = self.nearby_bsm.get(obu_data.sender)
-            obu_dict["edm"] = obu_data
-            self.vehicle_module.set_obu_data(obu_dict)
-            self.nearby_rsu_data[MessageType.EDM_NOIT] = obu_data
-        elif msg_type == MessageType.DNM_REQUEST:
-            print(f"Receive DNM_REQ_NOIT from OBU: {obu_data}")
-            self.receiver = obu_data.sender
-            self.obu_module.put_queue_data(DnmResponseData(self.ego_l2id, self.receiver))
-            self.nearby_rsu_data[MessageType.DNM_REQUEST] = obu_data
-        elif msg_type == MessageType.DNM_ACK:
-            self.nearby_rsu_data[MessageType.DNM_ACK] = obu_data
+                self.nearby_rsu_data[MessageType.DMM_NOIT] = obu_data
+            elif msg_type == MessageType.EDM_NOIT:
+                print(f"Receive EDM_NOIT from OBU: {obu_data}")
+                obu_dict["bsm"] = self.nearby_bsm.get(obu_data.sender)
+                obu_dict["edm"] = obu_data
+                self.vehicle_module.set_obu_data(obu_dict)
+                self.nearby_rsu_data[MessageType.EDM_NOIT] = obu_data
+            elif msg_type == MessageType.DNM_REQUEST:
+                print(f"Receive DNM_REQ_NOIT from OBU: {obu_data}")
+                self.receiver = obu_data.sender
+                self.obu_module.put_queue_data(DnmResponseData(self.ego_l2id, self.receiver))
+                self.nearby_rsu_data[MessageType.DNM_REQUEST] = obu_data
+            elif msg_type == MessageType.DNM_ACK:
+                self.nearby_rsu_data[MessageType.DNM_ACK] = obu_data
+        except Exception as err:
+            sys_log.error(f"msg_type:{msg_type},{err}")
         
     def set_vehicle_data(self, data: dict):
         if not isinstance(data, dict):

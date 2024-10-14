@@ -251,7 +251,7 @@ class ObuSocket(SocketModule):
                 backup_send_log.info(f"{log_msg}")
                 backup_send_raw_log.info(f"{pack_data.hex()}")
             _sock.sendto(_bsm.pack_data(), _remote_bind)
-            _sock.sendto(_cim.pack_data(), _remote_bind)
+            # _sock.sendto(_cim.pack_data(), _remote_bind)
             tablet_sock.sendto(_tablet_bsm.pack_data(), tablet_bind)
                 # print(f"BSM DATA:: {bsm}")
                 # print(f"CIM DATA:: {cim}")

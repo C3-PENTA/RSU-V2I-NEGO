@@ -24,8 +24,8 @@ class _MessageHeader:  # for send
         self.data_list = self.__match_args__
         self.header_list = _MessageHeader.__match_args__
         self.timestamp: float = time()
-        self.scaling_list = {'lat':1/10**8,
-                     'lon':1/10**8,
+        self.scaling_list = {'lat':1/10**7,
+                     'lon':1/10**7,
                      'hgt':0.1,
                      'transmission_and_speed':0.02,
                      'heading':0.0125,

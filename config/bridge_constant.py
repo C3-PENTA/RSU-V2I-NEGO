@@ -1,7 +1,7 @@
+from enum import Enum
 
 
-
-class STATUS:
+class STATUS(Enum):
     UNKNOWN = -1
     DISCONNECTED = 0
     BAD = 1

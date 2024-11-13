@@ -342,6 +342,7 @@ class CimData(_MessageHeader):
         self.data_list = CimData.__match_args__
 
 
+
 @dataclass_json
 @dataclass
 class ObuToVehicleData:
@@ -359,7 +360,7 @@ class VehicleData:
     lon: float = 0
     hgt: float = 0
     heading: float = 0
-    speed: float = 0  # km/h
+    transmission_and_speed: float = 0  # km/h
     turn_signal: int = 0
 
     width: int = VehicleSpec.WIDTH
@@ -383,6 +384,7 @@ MSG_TYPE = {MessageType.BSM_NOIT:BsmData,
             MessageType.BSM_LIGHT_NOIT:BsmLightData,
             MessageType.L2ID_REQUEST:L2idRequestData,
             MessageType.L2ID_RESPONSE:L2idResponseData,
+            MessageType.PIM_NOIT:None,
     }
     
 if __name__ == "__main__":

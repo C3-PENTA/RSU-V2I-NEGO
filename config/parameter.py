@@ -6,7 +6,7 @@ class RemoteAddress:
     TABLET_BIND = ('192.168.11.100', 63113)
     OBU_BIND = ("192.168.11.204", 63112)
     #tester
-    # OBU_BIND = ('localhost',63112)
+    # OBU_BIND = ('192.168.11.200',63113)
     # TABLET_BIND = ('localhost', 63113)
 
 
@@ -48,7 +48,7 @@ class VehicleSocketParam(CommunicatorConfig):
 class MiddleWareParam:
     update_rate: int = 20
     update_interval = 1/update_rate
-    nearby_data_timeout = 3
+    nearby_data_timeout = 2
     target_bsm_l2id = 2302467  # 6706503
 
 

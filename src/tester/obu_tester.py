@@ -14,7 +14,7 @@ class ObuTest():
     def __init__(self) -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # sock.bind(('localhost', 59450))
-        sock.bind(('192.168.11.200', 59450))
+        sock.bind(('192.168.11.200', 63113))
         # sock.bind(RemoteAddress.OBU_BIND)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.settimeout(0.2)
@@ -92,7 +92,7 @@ class ObuTest():
                     self.edm_trigger = True
             else:
                 print(f"It's an unknown command type")
-                
+            sleep(0.1)
 
     def process(self):
         recv_thread = Thread(target=self.recv_threading, daemon=True)
@@ -114,7 +114,7 @@ class ObuTest():
         dmm_data = DmmData()
         dmm_data.sender = 4321
         slow_bsm_data = BsmData()
-        slow_bsm_data.transmission_and_speed = 9
+        slow_bsm_data.transmission_and_speed = 1146.88
         slow_bsm_data.l2id = MiddleWareParam.target_bsm_l2id
 
         dmm_data.maneuver_type = 1
@@ -123,6 +123,7 @@ class ObuTest():
         edm_data = EdmData()
         edm_data.maneuver_type = 2
         edm_data.sender = 4321
+        self.addr = ('192.168.11.200', 63112)
         self.addr = ('192.168.11.200', 63112)
         self.is_l2id = True
         while 1:

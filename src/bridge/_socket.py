@@ -43,6 +43,10 @@ class SocketModule:
         # self.run()
         # self.run_thread = Thread(target=self.process, name=self.name, daemon=True)
         # self.run_thread.start()
+
+        def __del__(self):
+            if isinstance(self.sock, (socket.socket)):
+                self.sock.close()
     
     def create_socket(self, bind = None, protocol = None):
         if protocol == 'udp':
@@ -167,7 +171,7 @@ class ObuSocket(SocketModule):
     def __init__(self, config: ObuSocketParam, middle_ware) -> None:
         self.run_recv = False
         self.run_send = False
-        self.send_queue = deque([])
+        self.send_queue = deque([],maxlen=15)
         self.middle_ware = middle_ware
         super().__init__(config)
 
@@ -176,8 +180,20 @@ class ObuSocket(SocketModule):
         self.thread_process = Thread(target=self.process, daemon=True)
         self.thread_process.start()
 
+    def __del__(self):
+        if isinstance(self.tablet_sock, (socket.socket)):
+            self.tablet_sock.close()
+            return super().__del__()
+
     def put_queue_data(self, data):
         self.send_queue.append(data)
+        
+    def backup_obu_data(self, queue_data):
+        log_msg = ''
+        for key, val in queue_data.to_dict().items():
+            log_msg += f"{key}={val},"
+        backup_send_log.info(f"{log_msg}")
+        backup_send_raw_log.info(f"{queue_data.pack_data().hex()}")
     
     def recv_obu_data(self):
         func_name = f'{self.__class__.__name__}::{sys._getframe().f_code.co_name}'
@@ -212,7 +228,8 @@ class ObuSocket(SocketModule):
         _sock = self.create_socket(_config.send_host_bind,'udp')
         _remote_bind = self.remote_bind
         
-        tablet_sock = self.create_socket(_config.tablet_bind,'udp')
+        self.tablet_sock = self.create_socket(_config.tablet_bind,'udp')
+        tablet_sock = self.tablet_sock
         tablet_bind = _config.remote_tablet_bind  # ETRI 태블릿 정보 추가할 것
 
         _update_interval = _config.update_interval
@@ -225,19 +242,17 @@ class ObuSocket(SocketModule):
         sync_time = time()
 
         send_queue = self.send_queue
+        _backup_obu = self.backup_obu_data
         while self.run_send:
             # try:
             if not middle_ware.ego_l2id:
                 if send_queue:
                     queue_data = send_queue.popleft()
                     pack_data = queue_data.pack_data()
+                    _backup_obu(queue_data)
                     # print(f"{queue_data = }")
                     _sock.sendto(pack_data, _remote_bind)
-                    log_msg = ''
-                    for key, val in queue_data.to_dict().items():
-                        log_msg += f",{key}={val}"
-                    backup_send_log.info(f"{log_msg}")
-                    backup_send_raw_log.info(f"{pack_data.hex()}")
+
                     # print(f"Request L2ID: {queue_data}")
                 sleep(_update_interval)
                 continue
@@ -246,13 +261,13 @@ class ObuSocket(SocketModule):
                 pack_data = queue_data.pack_data()
                 _sock.sendto(pack_data, _remote_bind)
                 log_msg = ''
-                for key, val in queue_data.to_dict().items():
-                    log_msg += f",{key}={val}"
-                backup_send_log.info(f"{log_msg}")
-                backup_send_raw_log.info(f"{pack_data.hex()}")
+                _backup_obu(queue_data)
+
             _sock.sendto(_bsm.pack_data(), _remote_bind)
-            # _sock.sendto(_cim.pack_data(), _remote_bind)
             tablet_sock.sendto(_tablet_bsm.pack_data(), tablet_bind)
+            # _backup_obu(_bsm)
+            _backup_obu(_tablet_bsm)
+            # _sock.sendto(_cim.pack_data(), _remote_bind)
                 # print(f"BSM DATA:: {bsm}")
                 # print(f"CIM DATA:: {cim}")
                     # print(f'{queue_data = }')
@@ -334,7 +349,8 @@ class VehicleSocket(SocketModule):
         _sock = None
         while 1:
             if _sock is None:
-                _sock = self.create_socket(bind=self.config.host_bind)
+                self.sock = self.create_socket(bind=self.config.host_bind)
+                _sock = self.sock
             if not self.is_connected:
                 if self.connect_remote(_sock):
                     self.is_connected = True

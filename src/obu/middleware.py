@@ -51,6 +51,8 @@ class MiddleWare:
         msg_type = self.unpack_msg_type(data)
         try:
             obu_data = MSG_TYPE[msg_type](data = data)
+            if not obu_data:
+                return
             log_msg = ''
             for key, val in obu_data.to_dict().items():
                 log_msg += f"{key}={val},"
@@ -67,6 +69,7 @@ class MiddleWare:
                 self.nearby_bsm[obu_data.l2id] = obu_data
                 # 차량에 보낼 데이터 정의 필요
                 if obu_data.transmission_and_speed<=1146.88 and obu_data.l2id == MiddleWareParam.target_bsm_l2id:
+                    print(f"Receive DMM_NOIT from OBU: {obu_data}")
                     obu_dict["bsm"] = self.nearby_bsm.get(obu_data.l2id)
                     self.vehicle_module.set_obu_data(obu_dict)
                     
@@ -89,8 +92,11 @@ class MiddleWare:
                 self.nearby_rsu_data[MessageType.DNM_REQUEST] = obu_data
             elif msg_type == MessageType.DNM_ACK:
                 self.nearby_rsu_data[MessageType.DNM_ACK] = obu_data
+            else:
+                pass
         except Exception as err:
-            sys_log.error(f"msg_type:{msg_type},{err}")
+            pass
+            # sys_log.error(f"msg_type:{msg_type},{err}")
         
     def set_vehicle_data(self, data: dict):
         if not isinstance(data, dict):
@@ -142,8 +148,12 @@ class MiddleWare:
                 continue
 
             _vehicle_data = self.vehicle_data
-            if _vehicle_data.turn_signal:
-                put_obu_queue(DmmData(self.ego_l2id, _vehicle_data.turn_signal))
+            if _vehicle_data.turn_signal == 1:
+                put_obu_queue(DmmData(self.ego_l2id, 2))
+            elif _vehicle_data.turn_signal == 2:
+                put_obu_queue(DmmData(self.ego_l2id, 3))
+            # elif _vehicle_data.turn_signal == 4:
+            #     put_obu_queue(DmmData(self.ego_l2id, 1))
             
             # 오래된 OBU 데이터 소거
             if _nearby_bsm:

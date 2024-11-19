@@ -225,8 +225,12 @@ class DmmData(_MessageHeader):
             self.unpack_data(data)
         if l2id:
             self.sender = l2id
-        if maneuver:
-            self.maneuver_type = maneuver
+        if maneuver == 1:
+            self.maneuver_type = DmmManeuverType.LEFT_LANE_CHANGE
+        elif maneuver == 2:
+            self.maneuver_type = DmmManeuverType.RIGHT_LANE_CHANGE
+        else:
+            self.maneuver_type = DmmManeuverType.UNKNOWN
         if dist:
             self.remain_distance = dist
 

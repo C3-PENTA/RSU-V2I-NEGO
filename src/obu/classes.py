@@ -390,27 +390,3 @@ MSG_TYPE = {MessageType.BSM_NOIT:BsmData,
             MessageType.L2ID_RESPONSE:L2idResponseData,
             MessageType.PIM_NOIT:None,
     }
-    
-if __name__ == "__main__":
-    # test_bytes = b'\x00\x02\x02\x00\x02\x00\x02\x00\x01\x01\x00\x01\x00\x01'
-    bsm_test_data = bytes.fromhex('F1F1010000002B00000000010000165E581A4B776578000000000000000000000000000000000000000000C801F400000000')
-    bsm_test_data1 = bytes.fromhex('F1F1010000000300000000000000FFFFFF')
-    # print(f"{_test_data =}")
-    # test_data = _test_data.to_bytes()
-    # a = Message(test_bytes)
-    b = BsmData(bsm_test_data)
-    print(b)
-    b.pack_data()
-    # b.pack_data()
-    # b.pack_data()
-    print(b.to_dict())
-    
-
-'''
-1. data 관리를 어찌 할 것인가,,,
-    - 데이터를 msg header의 인자로 넣고, 관리 or 한 꺼번에 관리
-    - 받는 데이터는 매번 생성?
-
-2. 차량<->미들웨어의 데이터 관리를 어찌,,,
-    - 데이터와 주기가 매번 다름
-'''

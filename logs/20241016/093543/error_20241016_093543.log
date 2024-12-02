@@ -1,0 +1,5 @@
+2024-10-16 09:56:53.331,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).
+2024-10-16 09:58:00.517,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-10-16 10:01:03.735,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-10-16 10:02:18.827,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-10-16 10:22:44.545,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).

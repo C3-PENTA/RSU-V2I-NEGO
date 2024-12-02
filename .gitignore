@@ -9,8 +9,8 @@ __pycache__
 docs/
 
 # log
-logs/
-/logs
+# logs/
+# /logs
 
 # env and config
 tempCodeRunnerFile.py

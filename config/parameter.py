@@ -64,7 +64,3 @@ class LoggerParam:
     backup_recv_data: bool = True
     backup_send_data: bool = True
 
-
-if __name__ == '__main__':
-    a = ObuSocketParam
-    print(a.name)

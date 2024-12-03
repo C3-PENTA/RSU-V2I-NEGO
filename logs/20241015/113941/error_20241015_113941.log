@@ -1,0 +1,2 @@
+2024-10-15 11:43:38.230,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).
+2024-10-15 11:51:03.778,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).

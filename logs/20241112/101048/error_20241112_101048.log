@@ -1,0 +1,15 @@
+2024-11-12 11:22:46.655,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).
+2024-11-12 11:25:20.904,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:28:13.179,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:29:31.257,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:31:19.364,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:36:40.670,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:40:58.909,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:43:11.052,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:48:11.326,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:48:41.365,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:49:02.393,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:50:29.482,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:51:14.535,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:52:35.606,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-11-12 11:54:32.719,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다

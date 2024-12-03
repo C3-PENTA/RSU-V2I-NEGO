@@ -1,0 +1,18 @@
+2024-09-05 17:24:14.791,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).
+2024-09-05 17:25:24.926,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).
+2024-09-05 17:31:39.073,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).
+2024-09-05 17:33:25.265,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 17:36:58.443,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 17:42:40.725,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 17:44:31.810,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 17:44:37.829,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 17:45:01.856,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 17:49:26.079,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 17:51:29.192,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 17:52:26.247,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 17:59:02.580,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 18:00:59.745,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).
+2024-09-05 18:01:27.774,error,ERROR,VehicleSocket::process,Disconnected: VehicleSocket(('localhost', 20000)).
+2024-09-05 18:02:34.943,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 18:03:04.978,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다
+2024-09-05 18:03:23.002,error,ERROR,VehicleSocket::connect_remote,Raise connection error: [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다

@@ -1,0 +1,11 @@
+2024-11-11 15:02:14.972,system,INFO,Start rsu module.
+2024-11-11 15:02:14.972,system,INFO,Run VehicleSocket modules process
+2024-11-11 15:02:14.973,system,INFO,MY BIND IP: ('192.168.11.200', 63112)
+2024-11-11 15:02:14.974,system,INFO,Run ObuSocket modules process
+2024-11-11 15:02:14.974,system,INFO,Run MiddleWare Process.
+2024-11-11 15:02:14.975,system,INFO,MY BIND IP: ('192.168.11.200', 63111)
+2024-11-11 15:02:14.975,system,INFO,MY BIND IP: ('192.168.11.200', 63114)
+2024-11-11 15:02:14.976,system,INFO,MY BIND IP: ('localhost', 28000)
+2024-11-11 15:02:14.976,system,INFO,VehicleSocket::connect_remote,Connecting ('localhost', 20000)...
+2024-11-11 15:02:14.988,system,INFO,VehicleSocket::connect_remote,Connected VehicleSocket socket.
+2024-11-11 15:05:58.222,system,ERROR,msg_type:2,'NoneType' object is not callable

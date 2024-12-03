@@ -1,0 +1,9 @@
+2024-10-15 11:26:34.906,system,INFO,Start rsu module.
+2024-10-15 11:26:34.906,system,INFO,Run VehicleSocket modules process
+2024-10-15 11:26:34.907,system,INFO,MY BIND IP: ('192.168.11.200', 63112)
+2024-10-15 11:26:34.908,system,INFO,Run ObuSocket modules process
+2024-10-15 11:26:34.908,system,INFO,Run MiddleWare Process.
+2024-10-15 11:26:34.909,system,INFO,MY BIND IP: ('192.168.11.200', 63112)
+2024-10-15 11:26:34.910,system,INFO,MY BIND IP: ('192.168.11.200', 63114)
+2024-10-15 11:26:34.911,system,INFO,MY BIND IP: ('localhost', 28000)
+2024-10-15 11:26:34.912,system,INFO,VehicleSocket::connect_remote,Connecting ('localhost', 20000)...

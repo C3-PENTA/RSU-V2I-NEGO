@@ -6,11 +6,11 @@ __pycache__
 
 /*.pyc
 
-docs/
+# docs/
 
 # log
-logs/
-/logs
+# logs/
+# /logs
 
 # env and config
 tempCodeRunnerFile.py

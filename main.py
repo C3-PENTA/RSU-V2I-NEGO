@@ -6,7 +6,7 @@ from time import sleep
 from config.loggers import sys_log
 from src.obu.middleware import run_middleware
 
-module_list = {'rsu':Thread(),}
+module_list = {'RSU':Thread(),}
 def run_modules():
     while True:
         for name, module in module_list.items():

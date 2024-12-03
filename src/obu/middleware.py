@@ -170,6 +170,3 @@ def run_middleware():
     mw = MiddleWare()
     mw.process()
             
-if __name__ == '__main__':
-    mw = MiddleWare()
-    mw.process()

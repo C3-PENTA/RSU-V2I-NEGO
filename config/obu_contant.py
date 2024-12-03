@@ -1,7 +1,8 @@
+from enum import IntEnum, StrEnum
 
 
-
-class MessageType:
+class MessageType(IntEnum):
+    UNKNOWN = 0
     BSM_NOIT = 1
     PIM_NOIT = 2
     DMM_NOIT = 3
@@ -17,7 +18,7 @@ class MessageType:
     LIGHT_NOIT = 103    
     
     
-class ExteriorLightType:
+class ExteriorLightType(IntEnum):
     LOWBEAM_HEADLIGHT_ON = 0
     HIGHBEAM_HEADLIGHT_ON = 1
     LEFT_TURN_SIGNAL_ON = 2
@@ -29,7 +30,17 @@ class ExteriorLightType:
     PARKING_LIGHT_ON = 8
 
 
-class ManeuverType:
+class EdmManeuverType(IntEnum):
+    UNKNOWN = 0
+    LANE_CHANGE = 1
+    STRAIGHT_AT_CROSSROAD = 2
+    LEFT_AT_CROSSROAD = 3
+    RIGHT_AT_CROSSROAD = 4
+    U_TURN = 7
+    OVERTAKE = 8
+
+
+class DmmManeuverType(IntEnum):
     UNKNOWN = 0
     STRAIGHT = 1
     LEFT_LANE_CHANGE = 2
@@ -40,10 +51,11 @@ class ManeuverType:
     U_TURN = 7
     OVERTAKE = 8
 
-class DataFormat:
+class DataFormat(StrEnum):
     BYTE_ORDER = '>'
     HEADER: str = 'HBHH'
     BSM: str = 'BIHiiHBBHHHBhhBhHHHI'
+    MY_BSM: str = 'BIHiiHBBHHHBhhBhHHHI'
     BSM_LIGHT: str = 'BIHiiHBBHHHbHHBHHHHIH'
     CIM:str = 'IB'
     DMM: str = 'IIHB'
@@ -54,13 +66,37 @@ class DataFormat:
     L2ID_RESPONSE: str = 'I'
     L2ID_REQUEST: str = ''
     
+class ManeuverCommandType(IntEnum):
+    NONE = 0
+    WAIT = 1
+    STOP = 2
+    SLOW_DOWN = 3
+    LEFT_LANE_CHANGE = 4
+    RIGHT_LANE_CHANGE = 5
+
+class ManeuverLaneType(IntEnum):
+    NONE = 0
+    CURRENT_LANE = 1
+    LEFT_LANE = 2
+    RIGHT_LANE = 3
+    SHOULDER = 4
+    OFF_ROAD = 5
+    
+class AgreementFlag(IntEnum):
+    DISAGREEMENT = 0
+    AGREEMENT = 1
+    
 class BSM:
+    msg_type: int = MessageType.BSM_NOIT
+    packet_len: int = 50
+
+class MY_BSM:
     msg_type: int = MessageType.MY_BSM_NOIT
     packet_len: int = 50
 
 class DMM:
     msg_type: int = MessageType.DMM_NOIT
-    packet_len: int = 18
+    packet_len: int = 11
     
 class CIM:
     msg_type: int = MessageType.CIM_NOIT
@@ -73,3 +109,25 @@ class DNM_REP:
 class L2ID:
     msg_type: int = MessageType.L2ID_REQUEST
     packet_len: int = 7
+
+class L2ID_RESPONSE:
+    msg_type: int = MessageType.L2ID_RESPONSE
+    packet_len: int = 11
+
+class DNM_DONE:
+    msg_type: int = MessageType.DNM_ACK
+    packet_len: int = 9
+    
+class DNM_REQUEST:
+    msg_type: int = MessageType.DNM_REQUEST
+    packet_len: int = 9
+
+class EDM:
+    msg_type: int = MessageType.EDM_NOIT
+    packet_len: int = 7
+    
+    
+class BSM_LIGHT:
+    msg_type: int = MessageType.BSM_LIGHT_NOIT
+    packet_len: int = 52
+    
